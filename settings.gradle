@@ -1,0 +1,10 @@
+rootProject.name = 'CINEMARX'
+
+include ':M1'
+include ':M2'
+include ':M3'
+include ':M4'
+include ':M5'
+include ':M6'
+include ':M7'
+
