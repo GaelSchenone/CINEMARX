@@ -1,6 +1,23 @@
-description = 'M4'
-
-dependencies {
-    implementation files('libs/mariadb-java-client-3.5.6.jar')
+plugins {
+    id 'java'
+    id 'application'
 }
 
+description = 'M4'
+
+application {
+    mainClass = 'CINEMARX.M4.M4'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation files('../M4/libs/mariadb-java-client-3.5.6.jar')
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
