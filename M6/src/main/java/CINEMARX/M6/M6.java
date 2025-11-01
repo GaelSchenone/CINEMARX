@@ -26,10 +26,11 @@ public class M6 extends JFrame {
     private final Color SECTION_TITLE_COLOR = new Color(200, 200, 200);
     
     // Configuración de base de datos
-    private final String DB_URL = "jdbc:mysql://localhost:3306/Cinemarx";
-    private final String DB_USER = "root";
-    private final String DB_PASSWORD = "12341234";
+    private final String DB_URL = "jdbc:mariadb://br1.aguilucho.ar:25584/Cinemarx";
+    private final String DB_USER = "cnx_admin";
+    private final String DB_PASSWORD = "CnxAdmin!620";
     
+
     public M6() {
         initComponents();
     }
