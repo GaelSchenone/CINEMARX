@@ -58,6 +58,7 @@ public class AltaFuncion {
         UIHelpers.styleComboBox(peliculaCombo);
         DatabaseHelper.cargarPeliculas(mainFrame, peliculaCombo);
         formPanel.add(peliculaCombo, gbc);
+        peliculaCombo.setForeground(Color.BLACK);
 
         // Sala
         gbc.gridx = 0; gbc.gridy = 4;
@@ -67,6 +68,7 @@ public class AltaFuncion {
         UIHelpers.styleComboBox(salaCombo);
         DatabaseHelper.cargarSalas(mainFrame, salaCombo);
         formPanel.add(salaCombo, gbc);
+        salaCombo.setForeground(Color.BLACK);
 
         // Cartelera
         gbc.gridx = 0; gbc.gridy = 5;
@@ -76,6 +78,7 @@ public class AltaFuncion {
         UIHelpers.styleComboBox(carteleraCombo);
         DatabaseHelper.cargarCarteleras(mainFrame, carteleraCombo);
         formPanel.add(carteleraCombo, gbc);
+        carteleraCombo.setForeground(Color.BLACK);
 
         // Botón
         gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 2;

@@ -37,6 +37,7 @@ public class ModificacionFuncion {
         DatabaseHelper.cargarFunciones(mainFrame, funcionCombo);
         formPanel.add(funcionCombo);
         formPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        funcionCombo.setForeground(Color.BLACK);
 
         // Panel de formulario con campos
         JPanel fieldsPanel = new JPanel(new GridBagLayout());
@@ -73,6 +74,7 @@ public class ModificacionFuncion {
         UIHelpers.styleComboBox(peliculaCombo);
         DatabaseHelper.cargarPeliculas(mainFrame, peliculaCombo);
         fieldsPanel.add(peliculaCombo, gbc);
+        peliculaCombo.setForeground(Color.BLACK);
 
         gbc.gridx = 0; gbc.gridy = 4;
         fieldsPanel.add(UIHelpers.createLabel("Sala:"), gbc);
@@ -81,6 +83,7 @@ public class ModificacionFuncion {
         UIHelpers.styleComboBox(salaCombo);
         DatabaseHelper.cargarSalas(mainFrame, salaCombo);
         fieldsPanel.add(salaCombo, gbc);
+        salaCombo.setForeground(Color.BLACK);
 
         gbc.gridx = 0; gbc.gridy = 5;
         fieldsPanel.add(UIHelpers.createLabel("Cartelera:"), gbc);
@@ -89,6 +92,7 @@ public class ModificacionFuncion {
         UIHelpers.styleComboBox(carteleraCombo);
         DatabaseHelper.cargarCarteleras(mainFrame, carteleraCombo);
         fieldsPanel.add(carteleraCombo, gbc);
+        carteleraCombo.setForeground(Color.BLACK);
 
         formPanel.add(fieldsPanel);
         formPanel.add(Box.createRigidArea(new Dimension(0, 20)));

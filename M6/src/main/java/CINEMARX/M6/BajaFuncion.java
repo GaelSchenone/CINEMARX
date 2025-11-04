@@ -34,6 +34,7 @@ public class BajaFuncion {
         UIHelpers.styleComboBox(funcionCombo);
         funcionCombo.setMaximumSize(new Dimension(650, 35));
         funcionCombo.setAlignmentX(Component.LEFT_ALIGNMENT);
+        funcionCombo.setForeground(Color.BLACK);
         DatabaseHelper.cargarFunciones(mainFrame, funcionCombo);
         formPanel.add(funcionCombo);
         formPanel.add(Box.createRigidArea(new Dimension(0, 20)));

@@ -69,7 +69,7 @@ public class Ventas {
         funcionComboBox.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         funcionComboBox.setPreferredSize(new Dimension(400, 35));
         funcionComboBox.setBackground(new Color(50, 50, 50));
-        funcionComboBox.setForeground(M6.TEXT_COLOR);
+        funcionComboBox.setForeground(Color.BLACK);
 
         comboPanel.add(funcionLabel);
         comboPanel.add(funcionComboBox);

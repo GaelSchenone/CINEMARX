@@ -42,7 +42,7 @@ public class ABM {
         operacionComboBox.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         operacionComboBox.setPreferredSize(new Dimension(150, 35));
         operacionComboBox.setBackground(new Color(50, 50, 50));
-        operacionComboBox.setForeground(M6.TEXT_COLOR);
+        operacionComboBox.setForeground(Color.BLACK);
 
         JLabel entidadLabel = new JLabel("Entidad:");
         entidadLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
@@ -53,7 +53,7 @@ public class ABM {
         entidadComboBox.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         entidadComboBox.setPreferredSize(new Dimension(150, 35));
         entidadComboBox.setBackground(new Color(50, 50, 50));
-        entidadComboBox.setForeground(M6.TEXT_COLOR);
+        entidadComboBox.setForeground(Color.BLACK);
 
         selectionPanel.add(operacionLabel);
         selectionPanel.add(operacionComboBox);

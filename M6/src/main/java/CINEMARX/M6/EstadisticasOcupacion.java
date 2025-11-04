@@ -41,8 +41,8 @@ public class EstadisticasOcupacion {
         JComboBox<SalaItem> salaComboBox = new JComboBox<>();
         salaComboBox.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         salaComboBox.setPreferredSize(new Dimension(200, 35));
-        salaComboBox.setBackground(new Color(50, 50, 50));
-        salaComboBox.setForeground(M6.TEXT_COLOR);
+        salaComboBox.setBackground(Color.WHITE);
+        salaComboBox.setForeground(Color.BLACK);
         
         comboPanel.add(salaLabel);
         comboPanel.add(salaComboBox);
@@ -51,11 +51,11 @@ public class EstadisticasOcupacion {
         JPanel tablePanel = new JPanel(new BorderLayout());
         tablePanel.setBackground(M6.BACKGROUND_COLOR);
         tablePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        tablePanel.setMaximumSize(new Dimension(900, 400));
-        tablePanel.setPreferredSize(new Dimension(900, 400));
+        tablePanel.setMaximumSize(new Dimension(700, 200));
+        tablePanel.setPreferredSize(new Dimension(700, 200));
         
         // Crear tabla
-        String[] columnNames = {"ID Función", "Película", "Fecha", "Hora", "Butacas Ocupadas", "Total Butacas", "Ocupación %"};
+        String[] columnNames = {"ID Función", "Película", "Fecha", "Hora", "Butacas Ocupadas", "Total Butacas"};
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -64,7 +64,7 @@ public class EstadisticasOcupacion {
         };
         
         // Agregar la primera fila con los nombres de las columnas
-        Object[] headerRow = {"ID Función", "Película", "Fecha", "Hora", "Butacas Ocup.", "Total Butac.", "Ocupación %"};
+        Object[] headerRow = {"ID Función", "Película", "Fecha", "Hora", "Butacas Ocup.", "Total Butac."};
         tableModel.addRow(headerRow);
         
         JTable table = new JTable(tableModel);
@@ -109,14 +109,13 @@ public class EstadisticasOcupacion {
     
     private void cargarEstadisticasSala(int idSala, DefaultTableModel tableModel) {
         tableModel.setRowCount(0);
-        
-        Object[] headerRow = {"ID Función", "Película", "Fecha", "Hora", "Butacas Ocup.", "Total Butac.", "Ocupación %"};
+
+        // Eliminamos la última columna ("Ocupación %")
+        Object[] headerRow = {"ID Función", "Película", "Fecha", "Hora", "Butacas Ocup.", "Total Butac."};
         tableModel.addRow(headerRow);
-        
-        DecimalFormat df = new DecimalFormat("#.##");
-        
+
         String query = "SELECT f.ID_Funcion, p.Titulo, f.FechaFuncion, f.HoraFuncion, " +
-                       "s.CantButacas, COUNT(b.ID_Boleto) as ButacasOcupadas " +
+                       "s.CantButacas, COUNT(b.ID_Boleto) AS ButacasOcupadas " +
                        "FROM Funcion f " +
                        "INNER JOIN Pelicula p ON f.ID_Pelicula = p.ID_Pelicula " +
                        "INNER JOIN Sala s ON f.ID_Sala = s.ID_Sala " +
@@ -124,12 +123,12 @@ public class EstadisticasOcupacion {
                        "WHERE f.ID_Sala = ? " +
                        "GROUP BY f.ID_Funcion, p.Titulo, f.FechaFuncion, f.HoraFuncion, s.CantButacas " +
                        "ORDER BY f.FechaFuncion DESC, f.HoraFuncion DESC";
-        
+
         try (PreparedStatement pstmt = mainFrame.getConnection().prepareStatement(query)) {
-            
+
             pstmt.setInt(1, idSala);
             ResultSet rs = pstmt.executeQuery();
-            
+
             while (rs.next()) {
                 int idFuncion = rs.getInt("ID_Funcion");
                 String titulo = rs.getString("Titulo");
@@ -137,27 +136,25 @@ public class EstadisticasOcupacion {
                 String hora = rs.getString("HoraFuncion");
                 int cantButacas = rs.getInt("CantButacas");
                 int butacasOcupadas = rs.getInt("ButacasOcupadas");
-                
-                double porcentaje = (cantButacas > 0) ? (butacasOcupadas * 100.0 / cantButacas) : 0;
-                
+
                 Object[] row = {
                     idFuncion,
                     titulo,
                     fecha,
                     hora,
                     butacasOcupadas,
-                    cantButacas,
-                    df.format(porcentaje) + "%"
+                    cantButacas
                 };
-                
+
                 tableModel.addRow(row);
             }
-            
+
+            // Si no hay resultados
             if (tableModel.getRowCount() == 1) {
-                Object[] emptyRow = {"---", "No hay funciones para esta sala", "---", "---", "---", "---", "---"};
+                Object[] emptyRow = {"---", "No hay funciones para esta sala", "---", "---", "---", "---"};
                 tableModel.addRow(emptyRow);
             }
-            
+
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(mainFrame, 
                 "Error al cargar estadísticas: " + e.getMessage(), 
@@ -166,4 +163,5 @@ public class EstadisticasOcupacion {
             e.printStackTrace();
         }
     }
+
 }
