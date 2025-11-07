@@ -1,4 +1,4 @@
-package CINEMARX.M7.cinecomida;
+package CINEMARX.M3;
 
 import javax.swing.*;
 import java.awt.*;

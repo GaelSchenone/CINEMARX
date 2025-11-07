@@ -1,9 +1,11 @@
-package CINEMARX.M7;
+package CINEMARX.M3;
 
+import CINEMARX.M3.BuffetFrame;
+import CINEMARX.M3.ConexionBD;
 import javax.swing.*;
 import java.sql.Connection;
 
-public class M7 {
+public class M3 {
     
     private void abrirModuloBuffet() {
         BuffetFrame buffetFrame = new BuffetFrame();
