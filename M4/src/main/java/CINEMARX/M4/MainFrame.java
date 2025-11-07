@@ -38,7 +38,13 @@ public class MainFrame extends JFrame {
         // Header compartido
         headerPanel = new HeaderPanel();
         mainPanel.add(headerPanel, BorderLayout.NORTH);
-        
+
+        // Separador blanco entre el header y el contenido
+        JPanel separator = new JPanel();
+        separator.setPreferredSize(new Dimension(0, 1)); // 1 pixel height
+        separator.setBackground(Color.WHITE);
+        mainPanel.add(separator, BorderLayout.CENTER); // Add separator to CENTER, it will be pushed NORTH by contentPanel
+
         // Contenedor de vistas
         cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
@@ -99,18 +105,22 @@ public class MainFrame extends JFrame {
 class HeaderPanel extends JPanel {
     
     public HeaderPanel() {
-        setLayout(new BorderLayout());
+        setLayout(new GridBagLayout());
         setBackground(new Color(0x2B2B2B));
         setPreferredSize(new Dimension(0, 70));
-        setBorder(BorderFactory.createCompoundBorder(
-            new EmptyBorder(10, 40, 10, 40),
-            BorderFactory.createMatteBorder(0, 0, 1, 0, Color.WHITE)
-        ));
+        setBorder(new EmptyBorder(10, 40, 10, 40));
         
         initComponents();
     }
     
     private void initComponents() {
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.VERTICAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1.0; // Allow logoPanel to take extra horizontal space
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+
         // Logo
         JPanel logoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         logoPanel.setBackground(new Color(0x2B2B2B));
@@ -137,9 +147,12 @@ class HeaderPanel extends JPanel {
             logoPanel.add(logoLabel);
         }
 
-        add(logoPanel, BorderLayout.WEST);
+        add(logoPanel, gbc);
         
         // Menú
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.weightx = 0.0; // menuContainer does not take extra horizontal space
+        gbc.gridx = 1;
         JPanel menuContainer = new JPanel(new GridBagLayout());
         menuContainer.setBackground(new Color(0x2B2B2B));
         
@@ -192,6 +205,6 @@ class HeaderPanel extends JPanel {
         }
         
         menuContainer.add(menu);
-        add(menuContainer, BorderLayout.EAST);
+        add(menuContainer, gbc);
     }
 }

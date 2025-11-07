@@ -411,11 +411,13 @@ public class PantallaButacas extends JPanel {
         
         btnSiguiente.addActionListener(e -> {
             if (butacasSeleccionadas.isEmpty()) {
-                JOptionPane.showMessageDialog(this, 
-                    "Por favor seleccione al menos una butaca", 
-                    "Aviso", JOptionPane.WARNING_MESSAGE);
+                CustomDialog dialog = new CustomDialog(M4.getMainFrame(), "Por favor, seleccione al menos una butaca.");
+                dialog.setVisible(true);
                 return;
             }
+            
+            
+
             guardarButacasEnOrden();
         });
         panelCompra.add(btnSiguiente);
