@@ -523,6 +523,31 @@ public class CatalogoPeliculasFrame extends JFrame {
             panelPeliculasSecciones.add(crearFilaSeccion("😂 Comedia", comedia));
             panelPeliculasSecciones.add(Box.createRigidArea(new Dimension(0, 30)));
         }
+        // --- NUEVAS SECCIONES AÑADIDAS
+    
+        List<Pelicula> aventura = peliculaDAO.obtenerPeliculasConFiltro("Aventura", "En Cartelera", LIMITE_POR_FILA);
+        if (!aventura.isEmpty()) {
+            panelPeliculasSecciones.add(crearFilaSeccion("🗺️ Aventura", aventura));
+            panelPeliculasSecciones.add(Box.createRigidArea(new Dimension(0, 30)));
+        }
+    
+        List<Pelicula> cienciaFiccion = peliculaDAO.obtenerPeliculasConFiltro("Ciencia Ficción", "En Cartelera", LIMITE_POR_FILA);
+        if (!cienciaFiccion.isEmpty()) {
+            panelPeliculasSecciones.add(crearFilaSeccion("👽 Ciencia Ficción", cienciaFiccion));
+            panelPeliculasSecciones.add(Box.createRigidArea(new Dimension(0, 30)));
+        }
+    
+        List<Pelicula> drama = peliculaDAO.obtenerPeliculasConFiltro("Drama", "En Cartelera", LIMITE_POR_FILA);
+        if (!drama.isEmpty()) {
+            panelPeliculasSecciones.add(crearFilaSeccion("🎭 Drama", drama));
+            panelPeliculasSecciones.add(Box.createRigidArea(new Dimension(0, 30)));
+        }
+        
+        List<Pelicula> Superheroes = peliculaDAO.obtenerPeliculasConFiltro("Superheroes", "En Cartelera", LIMITE_POR_FILA);
+        if (!Superheroes.isEmpty()) {
+            panelPeliculasSecciones.add(crearFilaSeccion("💥 Superheroes", Superheroes));
+            panelPeliculasSecciones.add(Box.createRigidArea(new Dimension(0, 30)));
+        }
         
         panelPeliculasSecciones.revalidate();
         panelPeliculasSecciones.repaint();
