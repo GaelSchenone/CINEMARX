@@ -70,7 +70,7 @@ goto fail
 :execute
 @rem Setup the command line
 
-set CLASSPATH=%APP_HOME%\lib\M1.jar;%APP_HOME%\lib\mariadb-java-client-3.5.6.jar;%APP_HOME%\lib\angus-mail-2.0.2.jar;%APP_HOME%\lib\jakarta.mail-api-2.1.2.jar;%APP_HOME%\lib\angus-activation-2.0.1.jar;%APP_HOME%\lib\jakarta.activation-api-2.1.2.jar
+set CLASSPATH=%APP_HOME%\lib\M1.jar;%APP_HOME%\lib\mariadb-java-client-3.5.6.jar
 
 
 @rem Execute M1
