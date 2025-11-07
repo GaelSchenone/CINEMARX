@@ -8,10 +8,6 @@ package CINEMARX.M2;
  * Clase de dominio que representa una Película en el sistema CinemarX
  * Mapea la tabla: Pelicula
  */
-/**
- * Clase de dominio que representa una Película en el sistema CinemarX
- * Mapea la tabla: Pelicula
- */
 public class Pelicula {
     
     // Atributos que coinciden con la BD
@@ -21,6 +17,9 @@ public class Pelicula {
     private String clasificacionEdad;
     private String estado;
     private String imagen; // Ruta de la imagen del poster (campo "Imagen" en BD)
+    
+    // --- NUEVO CAMPO ---
+    private String sinopsis;
     
     // Constructores
     
@@ -38,32 +37,40 @@ public class Pelicula {
         this.genero = genero;
         this.clasificacionEdad = clasificacionEdad;
         this.estado = estado;
-        this.imagen = null; // Por defecto null hasta que se asigne
+        this.imagen = null;
+        this.sinopsis = null; // Por defecto null
     }
     
     /**
      * Constructor completo sin imagen (para cuando se lee de BD actual)
+     * @deprecated Usar el constructor completo
      */
     public Pelicula(int idPelicula, String titulo, String genero, String clasificacionEdad, String estado) {
-        this.idPelicula = idPelicula;
-        this.titulo = titulo;
-        this.genero = genero;
-        this.clasificacionEdad = clasificacionEdad;
-        this.estado = estado;
-        this.imagen = null;
+        this(idPelicula, titulo, genero, clasificacionEdad, estado, null, null);
     }
     
     /**
-     * Constructor completo con imagen
+     * Constructor completo con imagen (usado en el DAO)
+     * @deprecated Usar el constructor completo con sinopsis
      */
     public Pelicula(int idPelicula, String titulo, String genero, String clasificacionEdad, 
                     String estado, String imagen) {
+        this(idPelicula, titulo, genero, clasificacionEdad, estado, imagen, null);
+    }
+
+    /**
+     * --- CONSTRUCTOR COMPLETO ACTUALIZADO ---
+     * Constructor completo con imagen y sinopsis (Usado por el DAO)
+     */
+    public Pelicula(int idPelicula, String titulo, String genero, String clasificacionEdad, 
+                    String estado, String imagen, String sinopsis) {
         this.idPelicula = idPelicula;
         this.titulo = titulo;
         this.genero = genero;
         this.clasificacionEdad = clasificacionEdad;
         this.estado = estado;
         this.imagen = imagen;
+        this.sinopsis = sinopsis;
     }
     
     // Getters y Setters
@@ -115,26 +122,26 @@ public class Pelicula {
     public void setImagen(String imagen) {
         this.imagen = imagen;
     }
+
+    // --- NUEVOS GETTERS Y SETTERS ---
+    public String getSinopsis() {
+        return sinopsis;
+    }
+
+    public void setSinopsis(String sinopsis) {
+        this.sinopsis = sinopsis;
+    }
     
     // Métodos útiles
     
-    /**
-     * Verifica si la película tiene una imagen asignada
-     */
     public boolean tieneImagen() {
         return imagen != null && !imagen.trim().isEmpty();
     }
     
-    /**
-     * Verifica si la película está en cartelera actualmente
-     */
     public boolean estaEnCartelera() {
         return "En Cartelera".equalsIgnoreCase(estado);
     }
     
-    /**
-     * Verifica si la película es próximo estreno
-     */
     public boolean esProximamente() {
         return "Próximamente".equalsIgnoreCase(estado);
     }
@@ -145,9 +152,8 @@ public class Pelicula {
                 "idPelicula=" + idPelicula +
                 ", titulo='" + titulo + '\'' +
                 ", genero='" + genero + '\'' +
-                ", clasificacionEdad='" + clasificacionEdad + '\'' +
                 ", estado='" + estado + '\'' +
-                ", imagen='" + (imagen != null ? imagen : "Sin imagen") + '\'' +
+                ", sinopsis='" + (sinopsis != null && sinopsis.length() > 20 ? sinopsis.substring(0, 20) + "..." : sinopsis) + '\'' +
                 '}';
     }
     
