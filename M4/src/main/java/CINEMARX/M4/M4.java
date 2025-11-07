@@ -3,28 +3,48 @@ package CINEMARX.M4;
 import javax.swing.*;
 import java.awt.*;
 import java.sql.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Clase principal del sistema de Cine Cinemar X
- * Gestiona la conexión a la base de datos y la navegación entre pantallas
+ * Gestiona la conexión a la base de datos y el contenedor SPA
  */
 public class M4 {
     private static Connection conexion;
     private static final String URL = "jdbc:mariadb://br1.aguilucho.ar:25584/Cinemarx";
     private static final String USER = "cnx_admin";
     private static final String PASSWORD = "CnxAdmin!620";
+    private static MainFrame mainFrame;
+    private static Map<String, JPanel> panelCache = new HashMap<>();
+    private static OrderDetails orderDetails;
     
     public static void main(String[] args) {
         try {
-            // Configurar Look and Feel del sistema
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             
-            // Establecer conexión a la base de datos
-            conectarBaseDatos();
-            
-            // Iniciar la aplicación
             SwingUtilities.invokeLater(() -> {
-                mostrarPantallaInicio();
+                mainFrame = new MainFrame();
+                mainFrame.setVisible(true);
+                mainFrame.showLoading();
+
+                new SwingWorker<Void, Void>() {
+                    @Override
+                    protected Void doInBackground() throws Exception {
+                        conectarBaseDatos();
+                        return null;
+                    }
+
+                    @Override
+                    protected void done() {
+                        try {
+                            get(); // Check for exceptions
+                            mostrarPantallaPelicula(1);
+                        } catch (Exception e) {
+                            mostrarError("Error al conectar a la base de datos", e);
+                        }
+                    }
+                }.execute();
             });
             
         } catch (Exception e) {
@@ -32,9 +52,6 @@ public class M4 {
         }
     }
     
-    /**
-     * Establece la conexión con la base de datos
-     */
     private static void conectarBaseDatos() {
         try {
             conexion = DriverManager.getConnection(URL, USER, PASSWORD);
@@ -45,9 +62,6 @@ public class M4 {
         }
     }
     
-    /**
-     * Obtiene la conexión a la base de datos
-     */
     public static Connection getConexion() {
         try {
             if (conexion == null || conexion.isClosed()) {
@@ -60,55 +74,49 @@ public class M4 {
     }
     
     /**
-     * Muestra la pantalla de inicio/selección de película
-     */
-    private static void mostrarPantallaInicio() {
-        // Aquí puedes crear una pantalla de inicio que liste las películas
-        // Por ahora, abrimos directamente una película de ejemplo
-        mostrarPantallaPelicula(1); // ID de película de ejemplo
-    }
-    
-    /**
-     * Muestra la pantalla de información de película
-     * @param idPelicula ID de la película a mostrar
-     */
-    
-    /**
-     * Muestra la pantalla de información de película
-     * @param idPelicula ID de la película a mostrar
+     * Navega a la pantalla de película
      */
     public static void mostrarPantallaPelicula(int idPelicula) {
-        SwingUtilities.invokeLater(() -> {
-            PantallaPelicula pantalla = new PantallaPelicula(getConexion(), idPelicula);
-            pantalla.setVisible(true);
-        });
-    }
-    
-    /**
-     * Muestra la pantalla de selección de butacas
-     * @param idFuncion ID de la función seleccionada
-     * @param idSala ID de la sala
-     */
-    public static void mostrarPantallaButacas(int idFuncion, int idSala, int idPelicula) {
-        SwingUtilities.invokeLater(() -> {
-            PantallaButacas pantalla = new PantallaButacas(getConexion(), idFuncion, idSala, idPelicula);
-            pantalla.setVisible(true);
-        });
-    }
-    
-    /**
-     * Cierra la ventana actual
-     * @param frame Ventana a cerrar
-     */
-    public static void cerrarVentana(JFrame frame) {
-        if (frame != null) {
-            frame.dispose();
+        if (mainFrame != null) {
+            String key = "pelicula";
+            PantallaPelicula panel;
+            if (!panelCache.containsKey(key)) {
+                panel = new PantallaPelicula(idPelicula);
+                panelCache.put(key, panel);
+            } else {
+                panel = (PantallaPelicula) panelCache.get(key);
+                panel.cargarPelicula(idPelicula);
+            }
+            mainFrame.cambiarContenido(panel, key);
         }
     }
     
     /**
-     * Muestra un mensaje de error
+     * Navega a la pantalla de butacas
      */
+    public static void mostrarPantallaButacas(int idFuncion, int idSala, int idPelicula) {
+        if (mainFrame != null) {
+            String key = "butacas-" + idFuncion;
+            // No cacheamos la pantalla de butacas para que se actualice siempre
+            JPanel panelButacas = new PantallaButacas(idFuncion, idSala, idPelicula);
+            mainFrame.cambiarContenido(panelButacas, key);
+        }
+    }
+    
+    /**
+     * Obtiene el frame principal
+     */
+    public static MainFrame getMainFrame() {
+        return mainFrame;
+    }
+
+    public static OrderDetails getOrderDetails(int idFuncion) {
+        if (orderDetails == null) {
+            orderDetails = new OrderDetails(idFuncion);
+        }
+        return orderDetails;
+    }
+    
     private static void mostrarError(String mensaje, Exception e) {
         System.err.println("ERROR: " + mensaje);
         e.printStackTrace();
@@ -121,9 +129,6 @@ public class M4 {
         });
     }
     
-    /**
-     * Cierra la conexión a la base de datos
-     */
     public static void cerrarConexion() {
         try {
             if (conexion != null && !conexion.isClosed()) {
@@ -135,9 +140,6 @@ public class M4 {
         }
     }
     
-    /**
-     * Hook para cerrar la conexión al salir
-     */
     static {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             cerrarConexion();

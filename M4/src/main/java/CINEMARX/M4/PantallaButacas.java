@@ -4,22 +4,21 @@ import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.BasicStroke;
 import java.net.URL;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.InputStream;
 import java.sql.*;
 import java.util.*;
 
-public class PantallaButacas extends JFrame {
-    private Connection conn;
+/**
+ * Panel de selección de butacas (sin JFrame, solo el contenido)
+ */
+public class PantallaButacas extends JPanel {
     private int idFuncion;
     private int idSala;
-    private int idPelicula; // Add field for movie ID
+    private int idPelicula;
+    private int cantButacas;
     private Set<String> butacasOcupadas;
     private Set<ButacaBoton> butacasSeleccionadas;
     private JPanel panelButacas;
@@ -27,22 +26,22 @@ public class PantallaButacas extends JFrame {
     class ButacaBoton extends JButton {
         String id;
         boolean ocupada;
-        boolean isSelected; // New field
+        boolean isSelected;
         private Color currentBackgroundColor;
 
         ButacaBoton(String id) {
             this.id = id;
             this.ocupada = false;
-            this.isSelected = false; // Initialize
+            this.isSelected = false;
             configurarEstilo();
         }
 
         void configurarEstilo() {
-            setPreferredSize(new Dimension(18, 18)); // Reduced size
+            setPreferredSize(new Dimension(18, 18));
             setFont(new Font("Arial", Font.BOLD, 9));
             setFocusPainted(false);
-            setBorderPainted(false); // We paint our own border
-            setContentAreaFilled(false); // We handle the background filling
+            setBorderPainted(false);
+            setContentAreaFilled(false);
             setCursor(new Cursor(Cursor.HAND_CURSOR));
 
             if (ocupada) {
@@ -58,7 +57,7 @@ public class PantallaButacas extends JFrame {
         void seleccionar() {
             currentBackgroundColor = new Color(220, 50, 50);
             setForeground(Color.WHITE);
-            isSelected = true; // Set selected state
+            isSelected = true;
             repaint();
         }
 
@@ -66,7 +65,7 @@ public class PantallaButacas extends JFrame {
             if (!ocupada) {
                 currentBackgroundColor = Color.WHITE;
                 setForeground(new Color(50, 50, 50));
-                isSelected = false; // Unset selected state
+                isSelected = false;
                 repaint();
             }
         }
@@ -75,25 +74,20 @@ public class PantallaButacas extends JFrame {
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE); // For sharper lines
+            g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
 
-            // Paint background
             g2.setColor(currentBackgroundColor);
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10); // Rounded corners
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
 
-            // Paint text
             super.paintComponent(g);
 
-            // Draw tick if selected
             if (isSelected) {
-                g2.setColor(new Color(0x6C0002)); // Tick color
-                g2.setStroke(new BasicStroke(2)); // Thicker line for the tick
+                g2.setColor(new Color(0x6C0002));
+                g2.setStroke(new BasicStroke(2));
 
                 int w = getWidth();
                 int h = getHeight();
 
-                // Coordinates for a simple tick (adjust as needed for appearance)
-                // This is a basic V shape
                 g2.drawLine(w / 4, h / 2, w / 2, h * 3 / 4);
                 g2.drawLine(w / 2, h * 3 / 4, w * 3 / 4, h / 4);
             }
@@ -102,36 +96,60 @@ public class PantallaButacas extends JFrame {
         }
     }
     
-    public PantallaButacas(Connection conn, int idFuncion, int idSala, int idPelicula) {
-        this.conn = conn;
+    public PantallaButacas(int idFuncion, int idSala, int idPelicula) {
         this.idFuncion = idFuncion;
         this.idSala = idSala;
-        this.idPelicula = idPelicula; // Store movie ID
+        this.idPelicula = idPelicula;
         this.butacasOcupadas = new HashSet<>();
         this.butacasSeleccionadas = new HashSet<>();
         
-        setTitle("CINEMAR X - Selecciona tu butaca");
-        setSize(1100, 800);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
+        System.out.println("PantallaButacas: idFuncion = " + idFuncion);
+
+        setLayout(new BorderLayout());
+        setBackground(new Color(0x2B2B2B));
         
-        cargarButacasOcupadas();
-        inicializarUI();
+        // Muestra un indicador de carga
+        JLabel loadingLabel = new JLabel("Cargando butacas...", JLabel.CENTER);
+        loadingLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        loadingLabel.setForeground(Color.WHITE);
+        add(loadingLabel, BorderLayout.CENTER);
+
+        new SwingWorker<JPanel, Void>() {
+            @Override
+            protected JPanel doInBackground() throws Exception {
+                cargarButacasOcupadas();
+                cargarCantButacas();
+                System.out.println("Butacas ocupadas: " + butacasOcupadas);
+                return createUI();
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    JPanel mainPanel = get();
+                    removeAll();
+                    add(mainPanel, BorderLayout.CENTER);
+                    revalidate();
+                    repaint();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }.execute();
+    }
+
+    private JPanel createUI() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(inicializarUI(), BorderLayout.CENTER);
+        return panel;
     }
     
     private void cargarButacasOcupadas() {
         try {
-            // Buscar todos los boletos de esta función
-            String sql = "SELECT b.NumeroButaca FROM Boleto b " +
-                        "INNER JOIN Empleado_Sala es ON b.ID_Empleado = es.ID_Empleado " +
-                        "WHERE es.ID_Sala = ? AND b.ID_Boleto IN (" +
-                        "  SELECT ID_Boleto FROM Comprobante_Boleto cb " +
-                        "  INNER JOIN Comprobante c ON cb.ID_Comprobante = c.ID_Comprobante " +
-                        "  WHERE c.ID_Funcion = ?)";
+            String sql = "SELECT NumeroButaca FROM Boleto WHERE ID_Funcion = ?";
             
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setInt(1, idSala);
-            ps.setInt(2, idFuncion);
+            PreparedStatement ps = M4.getConexion().prepareStatement(sql);
+            ps.setInt(1, idFuncion);
             ResultSet rs = ps.executeQuery();
             
             while (rs.next()) {
@@ -143,37 +161,79 @@ public class PantallaButacas extends JFrame {
         }
     }
     
-    private void inicializarUI() {
-        // Main container for the whole window
-        JPanel windowPanel = new JPanel(new BorderLayout());
-        windowPanel.setBackground(new Color(30, 30, 30));
+    private void cargarCantButacas() {
+        try {
+            String sql = "SELECT CantButacas FROM Sala WHERE ID_Sala = ?";
+            PreparedStatement ps = M4.getConexion().prepareStatement(sql);
+            ps.setInt(1, idSala);
+            ResultSet rs = ps.executeQuery();
+            
+            if (rs.next()) {
+                cantButacas = rs.getInt("CantButacas");
+            }
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
-        // 1. Header (Top Bar) - This will be fixed at the top
-        JPanel header = crearHeader();
-        windowPanel.add(header, BorderLayout.NORTH);
-
-        // 2. Scrollable Content Panel - This will contain everything else
+    private JPanel inicializarUI() {
         JPanel scrollableContent = new JPanel(new BorderLayout(20, 20));
-        scrollableContent.setBackground(new Color(30, 30, 30));
+        scrollableContent.setBackground(new Color(0x2B2B2B));
         scrollableContent.setBorder(new EmptyBorder(30, 50, 30, 50));
+
+        // Top panel with back button and title
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setOpaque(false);
+
+        // Back button
+        try {
+            URL backIconUrl = new URL("https://gaelschenone.aguilucho.ar/source_cmx/index.php?preview=botones%2Farrow-left.png");
+            InputStream backIn = backIconUrl.openStream();
+            BufferedImage backIconOriginal = ImageIO.read(backIn);
+            backIn.close();
+            
+            if (backIconOriginal != null) {
+                Image backIconScaled = backIconOriginal.getScaledInstance(40, 40, Image.SCALE_SMOOTH);
+                JLabel backButton = new JLabel(new ImageIcon(backIconScaled));
+                backButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+                backButton.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        M4.mostrarPantallaPelicula(idPelicula);
+                    }
+                });
+                topPanel.add(backButton, BorderLayout.WEST);
+            }
+        } catch (Exception e) {
+            // Fallback text button
+            JButton backButton = new JButton("<");
+            backButton.setFont(new Font("Arial", Font.BOLD, 24));
+            backButton.setForeground(Color.WHITE);
+            backButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            backButton.addActionListener(e2 -> M4.mostrarPantallaPelicula(idPelicula));
+            topPanel.add(backButton, BorderLayout.WEST);
+        }
 
         // Título
         JLabel titulo = new JLabel("Selecciona tu butaca", JLabel.CENTER);
         titulo.setFont(new Font("Arial", Font.BOLD, 28));
         titulo.setForeground(Color.WHITE);
-        scrollableContent.add(titulo, BorderLayout.NORTH);
+        topPanel.add(titulo, BorderLayout.CENTER);
+
+        scrollableContent.add(topPanel, BorderLayout.NORTH);
 
         // Panel central con butacas
         JPanel centerPanel = new JPanel(new BorderLayout());
-        centerPanel.setBackground(new Color(30, 30, 30));
+        centerPanel.setBackground(new Color(0x2B2B2B));
 
         // Pantalla
         JPanel panelPantalla = crearPanelPantalla();
         centerPanel.add(panelPantalla, BorderLayout.NORTH);
 
-        // Butacas (NO MORE SCROLLPANE HERE)
+        // Butacas
         panelButacas = crearPanelButacas();
-        centerPanel.add(panelButacas, BorderLayout.CENTER); // Add directly
+        centerPanel.add(panelButacas, BorderLayout.CENTER);
 
         scrollableContent.add(centerPanel, BorderLayout.CENTER);
 
@@ -181,100 +241,19 @@ public class PantallaButacas extends JFrame {
         JPanel bottomPanel = crearPanelInferior();
         scrollableContent.add(bottomPanel, BorderLayout.SOUTH);
 
-        // 3. Create the main scroll pane that holds all the scrollable content
+        // Scroll pane
         JScrollPane mainScrollPane = new JScrollPane(scrollableContent);
         mainScrollPane.setBorder(null);
-        mainScrollPane.getVerticalScrollBar().setUnitIncrement(16); // Improve scroll speed
+        mainScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
-        // 4. Add the scroll pane to the main window panel
-        windowPanel.add(mainScrollPane, BorderLayout.CENTER);
-
-        // 5. Add the final panel to the JFrame
-        add(windowPanel);
-    }
-    
-    private JPanel crearHeader() {
-        JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(new Color(40, 40, 40));
-        header.setPreferredSize(new Dimension(0, 80));
-        header.setBorder(new EmptyBorder(15, 30, 15, 30));
-
-        // Back button with image
-        try {
-            URL backIconUrl = new URL("https://gaelschenone.aguilucho.ar/source_cmx/index.php?preview=botones%2Farrow-left.png");
-            InputStream backIn = backIconUrl.openStream();
-            BufferedImage backIconOriginal = ImageIO.read(backIn);
-            backIn.close();
-
-            if (backIconOriginal != null) {
-                Image backIconScaled = backIconOriginal.getScaledInstance(30, 30, Image.SCALE_SMOOTH);
-                JLabel backButtonLabel = new JLabel(new ImageIcon(backIconScaled));
-                backButtonLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-                backButtonLabel.addMouseListener(new MouseAdapter() {
-                    @Override
-                    public void mouseClicked(MouseEvent e) {
-                        M4.mostrarPantallaPelicula(idPelicula);
-                        dispose();
-                    }
-                });
-                header.add(backButtonLabel, BorderLayout.WEST);
-            } else {
-                throw new Exception("Back icon image could not be read.");
-            }
-        } catch (Exception e) {
-            // Fallback to text button if image fails
-            JButton backButton = new JButton("<");
-            backButton.addActionListener(ev -> {
-                M4.mostrarPantallaPelicula(this.idPelicula);
-                dispose();
-            });
-            header.add(backButton, BorderLayout.WEST);
-        }
-
-        // Logo with correct aspect ratio
-        try {
-            URL imageUrl = new URL("https://gaelschenone.aguilucho.ar/source_cmx/index.php?preview=logos%2FCINEMARX%20logotipo.png");
-            InputStream logoIn = imageUrl.openStream();
-            BufferedImage originalImage = ImageIO.read(logoIn);
-            logoIn.close();
-
-            if (originalImage != null) {
-                int newHeight = 40; // Set a fixed height
-                int newWidth = (originalImage.getWidth() * newHeight) / originalImage.getHeight(); // Calculate width to maintain aspect ratio
-                Image logo = originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
-                JLabel logoLabel = new JLabel(new ImageIcon(logo));
-                logoLabel.setHorizontalAlignment(SwingConstants.CENTER);
-                header.add(logoLabel, BorderLayout.CENTER);
-            } else {
-                 throw new Exception("Logo image could not be read.");
-            }
-        } catch (Exception e) {
-            JLabel logoLabel = new JLabel("CINEMAR X");
-            logoLabel.setFont(new Font("Arial", Font.BOLD, 32));
-            logoLabel.setForeground(Color.WHITE);
-            logoLabel.setHorizontalAlignment(SwingConstants.CENTER);
-            header.add(logoLabel, BorderLayout.CENTER);
-        }
-        
-        JPanel menu = new JPanel(new FlowLayout(FlowLayout.RIGHT, 30, 0));
-        menu.setBackground(new Color(40, 40, 40));
-        
-        String[] items = {"PELICULAS", "BUFFET", "MEMBRESIA"};
-        for (String item : items) {
-            JLabel label = new JLabel(item);
-            label.setFont(new Font("Arial", Font.PLAIN, 16));
-            label.setForeground(Color.WHITE);
-            label.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            menu.add(label);
-        }
-        
-        header.add(menu, BorderLayout.EAST);
-        return header;
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.add(mainScrollPane, BorderLayout.CENTER);
+        return mainPanel;
     }
     
     private JPanel crearPanelPantalla() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(new Color(30, 30, 30));
+        panel.setBackground(new Color(0x2B2B2B));
         panel.setBorder(new EmptyBorder(20, 0, 30, 0));
 
         try {
@@ -284,13 +263,9 @@ public class PantallaButacas extends JFrame {
             in.close();
 
             if (originalImage != null) {
-                // --- Image Scaling Logic ---
-                int newWidth = 600; // Define the new width
-                int newHeight = (originalImage.getHeight() * newWidth) / originalImage.getWidth(); // Maintain aspect ratio
-
+                int newWidth = 600;
+                int newHeight = (originalImage.getHeight() * newWidth) / originalImage.getWidth();
                 Image scaledImage = originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
-                // --- End of Scaling Logic ---
-
                 JLabel imageLabel = new JLabel(new ImageIcon(scaledImage));
                 panel.add(imageLabel, BorderLayout.CENTER);
             } else {
@@ -299,7 +274,6 @@ public class PantallaButacas extends JFrame {
 
         } catch (Exception e) {
             e.printStackTrace();
-            // Fallback in case the image fails to load
             JLabel lblPantalla = new JLabel("PANTALLA (Error al cargar imagen)", JLabel.CENTER);
             lblPantalla.setFont(new Font("Arial", Font.BOLD, 14));
             lblPantalla.setForeground(Color.RED);
@@ -311,105 +285,63 @@ public class PantallaButacas extends JFrame {
     
     private JPanel crearPanelButacas() {
         JPanel panel = new JPanel();
-        panel.setBackground(new Color(30, 30, 30));
+        panel.setBackground(new Color(0x2B2B2B));
         panel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(3, 3, 3, 3);
-        
-        // Configuración de la sala (similar a la imagen)
-        int[] filasPorSeccion = {1, 4, 9, 3}; // Fila superior, filas superiores medias, filas centrales, pasillos laterales
-        char letraInicial = 'A';
-        
-        // Fila superior (12 butacas)
+
+        int numMainRows = (cantButacas > 9) ? (cantButacas - 9) / 17 : 0;
+
+        // Fila frontal (A)
         gbc.gridy = 0;
-        for (int col = 0; col < 12; col++) {
-            gbc.gridx = col + 4; // Centrado
-            String id = "A" + (col + 1);
+        for (int i = 0; i < 9; i++) {
+            gbc.gridx = i + 5; // Centered in a 19-column grid
+            String id = "A" + (i + 1);
             agregarButaca(panel, id, gbc);
         }
-        
-        // Separador
+
+        // Separador de filas
         gbc.gridy++;
         gbc.gridx = 0;
-        gbc.gridwidth = 20;
+        gbc.gridwidth = 19;
         panel.add(Box.createVerticalStrut(15), gbc);
         gbc.gridwidth = 1;
-        
-        // Filas superiores (B-E): 3 + 7 + pasillo + 7 + 3
-        for (int fila = 0; fila < 4; fila++) {
+
+        // Filas principales
+        for (int row = 0; row < numMainRows; row++) {
             gbc.gridy++;
-            char letra = (char) ('B' + fila);
-            
-            // Lado izquierdo (3 butacas)
-            for (int col = 0; col < 3; col++) {
-                gbc.gridx = col;
-                String id = letra + "" + (col + 1);
+            char letra = (char) ('B' + row);
+
+            // Sección izquierda (3)
+            for (int i = 0; i < 3; i++) {
+                gbc.gridx = i;
+                String id = letra + "" + (i + 1);
                 agregarButaca(panel, id, gbc);
             }
-            
-            // Centro-izquierda (7 butacas)
-            for (int col = 0; col < 7; col++) {
-                gbc.gridx = col + 4;
-                String id = letra + "" + (col + 4);
+
+            // Pasillo izquierdo
+            gbc.gridx = 3;
+            panel.add(Box.createHorizontalStrut(18), gbc);
+
+            // Sección central (11)
+            for (int i = 0; i < 11; i++) {
+                gbc.gridx = i + 4;
+                String id = letra + "" + (i + 4);
                 agregarButaca(panel, id, gbc);
             }
-            
-            // Centro-derecha (7 butacas)
-            for (int col = 0; col < 7; col++) {
-                gbc.gridx = col + 13;
-                String id = letra + "" + (col + 11);
-                agregarButaca(panel, id, gbc);
-            }
-            
-            // Lado derecho (3 butacas)
-            for (int col = 0; col < 3; col++) {
-                gbc.gridx = col + 21;
-                String id = letra + "" + (col + 18);
+
+            // Pasillo derecho
+            gbc.gridx = 15;
+            panel.add(Box.createHorizontalStrut(18), gbc);
+
+            // Sección derecha (3)
+            for (int i = 0; i < 3; i++) {
+                gbc.gridx = i + 16;
+                String id = letra + "" + (i + 15);
                 agregarButaca(panel, id, gbc);
             }
         }
-        
-        // Separador
-        gbc.gridy++;
-        gbc.gridx = 0;
-        gbc.gridwidth = 24;
-        panel.add(Box.createVerticalStrut(15), gbc);
-        gbc.gridwidth = 1;
-        
-        // Filas centrales (F-N): 3 + 7 + pasillo + 7 + 3
-        for (int fila = 0; fila < 9; fila++) {
-            gbc.gridy++;
-            char letra = (char) ('F' + fila);
-            
-            // Lado izquierdo (3 butacas)
-            for (int col = 0; col < 3; col++) {
-                gbc.gridx = col;
-                String id = letra + "" + (col + 1);
-                agregarButaca(panel, id, gbc);
-            }
-            
-            // Centro-izquierda (7 butacas)
-            for (int col = 0; col < 7; col++) {
-                gbc.gridx = col + 4;
-                String id = letra + "" + (col + 4);
-                agregarButaca(panel, id, gbc);
-            }
-            
-            // Centro-derecha (7 butacas)
-            for (int col = 0; col < 7; col++) {
-                gbc.gridx = col + 13;
-                String id = letra + "" + (col + 11);
-                agregarButaca(panel, id, gbc);
-            }
-            
-            // Lado derecho (3 butacas)
-            for (int col = 0; col < 3; col++) {
-                gbc.gridx = col + 21;
-                String id = letra + "" + (col + 18);
-                agregarButaca(panel, id, gbc);
-            }
-        }
-        
+
         return panel;
     }
     
@@ -436,22 +368,22 @@ public class PantallaButacas extends JFrame {
     
     private JPanel crearPanelInferior() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(new Color(30, 30, 30));
+        panel.setBackground(new Color(0x2B2B2B));
         panel.setBorder(new EmptyBorder(20, 0, 0, 0));
         
         // Leyenda
         JPanel leyenda = new JPanel(new FlowLayout(FlowLayout.CENTER, 40, 10));
-        leyenda.setBackground(new Color(30, 30, 30));
+        leyenda.setBackground(new Color(0x2B2B2B));
         
-        leyenda.add(crearItemLeyenda("Disponible", Color.WHITE));
-        leyenda.add(crearItemLeyenda("No disponible", new Color(100, 100, 100)));
-        leyenda.add(crearItemLeyenda("Seleccionado", new Color(220, 50, 50)));
+        leyenda.add(crearItemLeyenda("Disponible", Color.WHITE, false));
+        leyenda.add(crearItemLeyenda("No disponible", new Color(100, 100, 100), false));
+        leyenda.add(crearItemLeyenda("Seleccionado", new Color(220, 50, 50), true));
         
         panel.add(leyenda, BorderLayout.NORTH);
         
         // Panel de compra
         JPanel panelCompra = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 20));
-        panelCompra.setBackground(new Color(30, 30, 30));
+        panelCompra.setBackground(new Color(0x2B2B2B));
         
         JButton btnSiguiente = new JButton("SIGUIENTE") {
             @Override
@@ -477,7 +409,15 @@ public class PantallaButacas extends JFrame {
         btnSiguiente.setContentAreaFilled(false);
         btnSiguiente.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
-        btnSiguiente.addActionListener(e -> procesarCompra());
+        btnSiguiente.addActionListener(e -> {
+            if (butacasSeleccionadas.isEmpty()) {
+                JOptionPane.showMessageDialog(this, 
+                    "Por favor seleccione al menos una butaca", 
+                    "Aviso", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            guardarButacasEnOrden();
+        });
         panelCompra.add(btnSiguiente);
         
         panel.add(panelCompra, BorderLayout.CENTER);
@@ -485,14 +425,11 @@ public class PantallaButacas extends JFrame {
         return panel;
     }
     
-    private JPanel crearItemLeyenda(String texto, Color color) {
+    private JPanel crearItemLeyenda(String texto, Color color, boolean isSelected) {
         JPanel item = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        item.setBackground(new Color(30, 30, 30));
+        item.setBackground(new Color(0x2B2B2B));
         
-        JPanel circulo = new JPanel();
-        circulo.setPreferredSize(new Dimension(25, 25));
-        circulo.setBackground(color);
-        circulo.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+        LeyendaButaca circulo = new LeyendaButaca(color, isSelected);
         
         JLabel label = new JLabel(texto);
         label.setFont(new Font("Arial", Font.PLAIN, 14));
@@ -504,66 +441,52 @@ public class PantallaButacas extends JFrame {
         return item;
     }
     
-    private void procesarCompra() {
-        if (butacasSeleccionadas.isEmpty()) {
-            JOptionPane.showMessageDialog(this, 
-                "Por favor seleccione al menos una butaca", 
-                "Aviso", JOptionPane.WARNING_MESSAGE);
-            return;
+    class LeyendaButaca extends JPanel {
+        private Color color;
+        private boolean isSelected;
+
+        LeyendaButaca(Color color, boolean isSelected) {
+            this.color = color;
+            this.isSelected = isSelected;
+            setPreferredSize(new Dimension(25, 25));
+            setOpaque(false);
         }
-        
-        // Aquí iría la lógica de crear el boleto en la BD
-        StringBuilder butacas = new StringBuilder();
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(color);
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+
+            if (isSelected) {
+                g2.setColor(new Color(0x6C0002));
+                g2.setStroke(new BasicStroke(2));
+                int w = getWidth();
+                int h = getHeight();
+                g2.drawLine(w / 4, h / 2, w / 2, h * 3 / 4);
+                g2.drawLine(w / 2, h * 3 / 4, w * 3 / 4, h / 4);
+            }
+            g2.dispose();
+        }
+    }
+
+    private void guardarButacasEnOrden() {
+        OrderDetails order = M4.getOrderDetails(idFuncion);
         for (ButacaBoton btn : butacasSeleccionadas) {
-            butacas.append(btn.id).append(", ");
+            Boleto boleto = new Boleto(btn.id, idFuncion, null);
+            order.addBoleto(boleto);
         }
-        
-        int respuesta = JOptionPane.showConfirmDialog(this,
-            "Butacas seleccionadas: " + butacas.toString() + "\n\n" +
-            "¿Confirmar compra?",
-            "Confirmar Compra",
-            JOptionPane.YES_NO_OPTION);
-        
-        if (respuesta == JOptionPane.YES_OPTION) {
-            guardarCompra();
-        }
+
+        System.out.println("Boletos guardados en la orden: " + order.getBoletos().size());
+
+        // Aquí se navegaría a la siguiente pantalla (productos)
+        // Por ahora, solo mostramos un mensaje
+        JOptionPane.showMessageDialog(this, 
+            "Butacas seleccionadas. Siguiente paso: seleccionar productos.", 
+            "Paso Siguiente", JOptionPane.INFORMATION_MESSAGE);
     }
-    
-    private void guardarCompra() {
-        try {
-            conn.setAutoCommit(false);
-            
-            // Aquí implementarías la lógica completa de guardado en la BD
-            // 1. Crear Comprobante
-            // 2. Crear Boletos con NumeroButaca
-            // 3. Relacionar en Comprobante_Boleto
-            
-            conn.commit();
-            
-            JOptionPane.showMessageDialog(this, 
-                "¡Compra realizada con éxito!", 
-                "Éxito", JOptionPane.INFORMATION_MESSAGE);
-            
-            // Volver a pantalla principal
-            M4.cerrarVentana(this);
-            // Aquí podrías mostrar un comprobante o volver al inicio
-            
-        } catch (SQLException e) {
-            try {
-                conn.rollback();
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, 
-                "Error al procesar la compra: " + e.getMessage(), 
-                "Error", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            try {
-                conn.setAutoCommit(true);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-    }
+
+
 }
