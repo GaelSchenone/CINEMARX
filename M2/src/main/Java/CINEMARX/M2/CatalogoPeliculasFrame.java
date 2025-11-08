@@ -543,12 +543,6 @@ public class CatalogoPeliculasFrame extends JFrame {
             panelPeliculasSecciones.add(Box.createRigidArea(new Dimension(0, 30)));
         }
         
-        List<Pelicula> Superheroes = peliculaDAO.obtenerPeliculasConFiltro("Superheroes", "En Cartelera", LIMITE_POR_FILA);
-        if (!Superheroes.isEmpty()) {
-            panelPeliculasSecciones.add(crearFilaSeccion("💥 Superheroes", Superheroes));
-            panelPeliculasSecciones.add(Box.createRigidArea(new Dimension(0, 30)));
-        }
-        
         panelPeliculasSecciones.revalidate();
         panelPeliculasSecciones.repaint();
     }
