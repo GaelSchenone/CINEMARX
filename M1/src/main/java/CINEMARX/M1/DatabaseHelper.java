@@ -387,6 +387,7 @@ public class DatabaseHelper {
     /**
      * Obtiene el historial de compras de un cliente (BOLETOS + PRODUCTOS)
      * Retorna un ResultSet con: Fecha, Descripcion, Precio, Tipo
+     * VERSIÓN MEJORADA CON MEJOR MANEJO DE ERRORES Y DEBUG
      */
     public ResultSet obtenerHistorialCompras(String correo) {
         String sql = 
@@ -420,11 +421,210 @@ public class DatabaseHelper {
             PreparedStatement pstmt = connection.prepareStatement(sql);
             pstmt.setString(1, correo);
             pstmt.setString(2, correo);
-            return pstmt.executeQuery();
+            
+            ResultSet rs = pstmt.executeQuery();
+            
+            // Debug: Verificar si hay resultados
+            if (!rs.isBeforeFirst()) {
+                System.out.println("⚠️ No se encontraron compras para el correo: " + correo);
+                System.out.println("💡 Verificando si el cliente existe...");
+                verificarDatosCliente(correo);
+            } else {
+                System.out.println("✅ Historial de compras cargado exitosamente para: " + correo);
+            }
+            
+            return rs;
             
         } catch (SQLException e) {
+            System.err.println("❌ Error al obtener historial de compras:");
             e.printStackTrace();
             return null;
+        }
+    }
+    
+    /**
+     * Método auxiliar para verificar si un cliente tiene compras registradas
+     */
+    public boolean tieneCompras(String correo) {
+        String sql = "SELECT COUNT(*) as total FROM Comprobante comp " +
+                     "INNER JOIN Cliente c ON comp.ID_Cliente = c.ID_Cliente " +
+                     "WHERE c.Mail = ?";
+        
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, correo);
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    int total = rs.getInt("total");
+                    System.out.println("📊 Total de comprobantes encontrados: " + total);
+                    return total > 0;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Método de diagnóstico para verificar datos del cliente
+     */
+    private void verificarDatosCliente(String correo) {
+        try {
+            // Verificar si el cliente existe
+            String sqlCliente = "SELECT ID_Cliente, DNI, Nombre, Apellido FROM Cliente c " +
+                               "INNER JOIN Usuario u ON c.DNI = u.DNI " +
+                               "WHERE c.Mail = ?";
+            
+            try (PreparedStatement pstmt = connection.prepareStatement(sqlCliente)) {
+                pstmt.setString(1, correo);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        int idCliente = rs.getInt("ID_Cliente");
+                        System.out.println("✓ Cliente encontrado - ID: " + idCliente);
+                        
+                        // Verificar comprobantes
+                        String sqlComprobantes = "SELECT COUNT(*) as total FROM Comprobante WHERE ID_Cliente = ?";
+                        try (PreparedStatement pstmt2 = connection.prepareStatement(sqlComprobantes)) {
+                            pstmt2.setInt(1, idCliente);
+                            try (ResultSet rs2 = pstmt2.executeQuery()) {
+                                if (rs2.next()) {
+                                    System.out.println("📝 Comprobantes registrados: " + rs2.getInt("total"));
+                                }
+                            }
+                        }
+                    } else {
+                        System.out.println("✗ Cliente NO encontrado con el correo: " + correo);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Inserta datos de prueba para testing
+     * ÚTIL PARA DESARROLLO Y PRUEBAS
+     */
+    public boolean insertarDatosPrueba(String correo) {
+        try {
+            connection.setAutoCommit(false);
+            
+            // Obtener ID del cliente
+            int idCliente = obtenerIdCliente(correo);
+            if (idCliente == -1) {
+                System.out.println("❌ Cliente no encontrado para correo: " + correo);
+                connection.rollback();
+                connection.setAutoCommit(true);
+                return false;
+            }
+            
+            System.out.println("🔄 Insertando datos de prueba para cliente ID: " + idCliente);
+            
+            // 1. Crear un comprobante
+            String sqlComprobante = "INSERT INTO Comprobante (NumComprobante, ID_Cliente, FechaCompra, MetodoPago, Canjeado) " +
+                                   "VALUES (?, ?, NOW(), 'Tarjeta de crédito', 'NO')";
+            int idComprobante;
+            
+            try (PreparedStatement pstmt = connection.prepareStatement(sqlComprobante, Statement.RETURN_GENERATED_KEYS)) {
+                pstmt.setString(1, "TEST-" + System.currentTimeMillis());
+                pstmt.setInt(2, idCliente);
+                pstmt.executeUpdate();
+                
+                try (ResultSet rs = pstmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        idComprobante = rs.getInt(1);
+                        System.out.println("✓ Comprobante creado - ID: " + idComprobante);
+                    } else {
+                        connection.rollback();
+                        connection.setAutoCommit(true);
+                        return false;
+                    }
+                }
+            }
+            
+            // 2. Buscar una función disponible y crear un boleto
+            String sqlBuscarFuncion = "SELECT f.ID_Funcion, f.Precio FROM Funcion f LIMIT 1";
+            
+            try (PreparedStatement pstmt = connection.prepareStatement(sqlBuscarFuncion);
+                 ResultSet rs = pstmt.executeQuery()) {
+                
+                if (rs.next()) {
+                    int idFuncion = rs.getInt("ID_Funcion");
+                    
+                    // Crear un boleto de prueba
+                    String sqlBoleto = "INSERT INTO Boleto (NumeroButaca, ID_Funcion, ID_Cliente) VALUES (?, ?, ?)";
+                    int idBoleto;
+                    
+                    try (PreparedStatement pstmt2 = connection.prepareStatement(sqlBoleto, Statement.RETURN_GENERATED_KEYS)) {
+                        pstmt2.setString(1, "A-TEST");
+                        pstmt2.setInt(2, idFuncion);
+                        pstmt2.setInt(3, idCliente);
+                        pstmt2.executeUpdate();
+                        
+                        try (ResultSet rs2 = pstmt2.getGeneratedKeys()) {
+                            if (rs2.next()) {
+                                idBoleto = rs2.getInt(1);
+                                System.out.println("✓ Boleto creado - ID: " + idBoleto);
+                                
+                                // Asociar boleto al comprobante
+                                String sqlCompBoleto = "INSERT INTO Comprobante_Boleto (ID_Comprobante, ID_Boleto, Cantidad) " +
+                                                      "VALUES (?, ?, ?)";
+                                try (PreparedStatement pstmt3 = connection.prepareStatement(sqlCompBoleto)) {
+                                    pstmt3.setInt(1, idComprobante);
+                                    pstmt3.setInt(2, idBoleto);
+                                    pstmt3.setInt(3, 2); // 2 boletos
+                                    pstmt3.executeUpdate();
+                                    System.out.println("✓ Relación Comprobante-Boleto creada");
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    System.out.println("⚠️ No hay funciones disponibles para crear boleto de prueba");
+                }
+            }
+            
+            // 3. Buscar un producto y asociarlo
+            String sqlBuscarProducto = "SELECT ID_Prod FROM Producto LIMIT 1";
+            
+            try (PreparedStatement pstmt = connection.prepareStatement(sqlBuscarProducto);
+                 ResultSet rs = pstmt.executeQuery()) {
+                
+                if (rs.next()) {
+                    int idProducto = rs.getInt("ID_Prod");
+                    
+                    String sqlCompProducto = "INSERT INTO Comprobante_Producto (ID_Comprobante, ID_Prod, Cantidad) " +
+                                            "VALUES (?, ?, ?)";
+                    try (PreparedStatement pstmt2 = connection.prepareStatement(sqlCompProducto)) {
+                        pstmt2.setInt(1, idComprobante);
+                        pstmt2.setInt(2, idProducto);
+                        pstmt2.setInt(3, 1);
+                        pstmt2.executeUpdate();
+                        System.out.println("✓ Producto asociado al comprobante");
+                    }
+                } else {
+                    System.out.println("⚠️ No hay productos disponibles para asociar");
+                }
+            }
+            
+            connection.commit();
+            connection.setAutoCommit(true);
+            System.out.println("✅ Datos de prueba insertados exitosamente");
+            return true;
+            
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+                connection.setAutoCommit(true);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            System.err.println("❌ Error al insertar datos de prueba:");
+            e.printStackTrace();
+            return false;
         }
     }
     
