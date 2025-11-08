@@ -31,11 +31,11 @@ public class Personal {
         JPanel tablePanel = new JPanel(new BorderLayout());
         tablePanel.setBackground(M6.BACKGROUND_COLOR);
         tablePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        tablePanel.setMaximumSize(new Dimension(900, 400));
-        tablePanel.setPreferredSize(new Dimension(900, 400));
+        tablePanel.setMaximumSize(new Dimension(800, 400));
+        tablePanel.setPreferredSize(new Dimension(800, 400));
 
         // Crear tabla
-        String[] columnNames = {"DNI", "Nombre", "Apellido", "Rol"};
+        String[] columnNames = {"DNI", "Nombre", "Apellido", "Rol", "Mail", "Contraseña"};
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -44,7 +44,7 @@ public class Personal {
         };
 
         // Agregar la primera fila con los nombres de las columnas
-        Object[] headerRow = {"DNI", "Nombre", "Apellido", "Rol"};
+        Object[] headerRow = {"DNI", "Nombre", "Apellido", "Rol", "Mail", "Contraseña"};
         tableModel.addRow(headerRow);
 
         JTable table = new JTable(tableModel);
@@ -114,12 +114,12 @@ public class Personal {
     public void cargarPersonal(DefaultTableModel tableModel) {
         tableModel.setRowCount(0);
 
-        Object[] headerRow = {"DNI", "Nombre", "Apellido", "Rol"};
+        Object[] headerRow = {"DNI", "Nombre", "Apellido", "Rol", "Mail", "Contraseña"};
         tableModel.addRow(headerRow);
 
         try {
             // Cargar administradores primero
-            String queryAdmin = "SELECT u.DNI, u.Nombre, u.Apellido " +
+            String queryAdmin = "SELECT u.DNI, u.Nombre, u.Apellido, a.Mail, a.Contrasena " +
                                "FROM Administrador a " +
                                "INNER JOIN Usuario u ON a.DNI = u.DNI " +
                                "ORDER BY u.Apellido, u.Nombre";
@@ -128,11 +128,15 @@ public class Personal {
                  ResultSet rs = stmt.executeQuery(queryAdmin)) {
 
                 while (rs.next()) {
+                    String password = rs.getString("Contrasena");
+                    String censoredPassword = "****" + password.substring(password.length() - 3);
                     Object[] row = {
                         rs.getInt("DNI"),
                         rs.getString("Nombre"),
                         rs.getString("Apellido"),
-                        "Administrador"
+                        "Administrador",
+                        rs.getString("Mail"),
+                        censoredPassword
                     };
                     tableModel.addRow(row);
                 }
@@ -152,7 +156,9 @@ public class Personal {
                         rs.getInt("DNI"),
                         rs.getString("Nombre"),
                         rs.getString("Apellido"),
-                        "Empleado"
+                        "Empleado",
+                        "",
+                        ""
                     };
                     tableModel.addRow(row);
                 }
@@ -206,6 +212,8 @@ public class Personal {
                     pstmt.setInt(1, dni);
                     pstmt.executeUpdate();
                 }
+
+                Logger.log(mainFrame.getConnection(), "Baja de " + rol + ": DNI=" + dni + ", Nombre=" + nombre + " " + apellido);
 
                 JOptionPane.showMessageDialog(mainFrame, 
                     rol + " eliminado exitosamente", 

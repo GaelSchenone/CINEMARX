@@ -118,6 +118,8 @@ public class M6 extends JFrame {
             new Peliculas(this, contentPanel).mostrar();
         } else if (buttonName.equals("Salas")){
             new Salas(this, contentPanel).mostrar();
+        } else if (buttonName.equals("Logs de acciones")){
+            new Logs(this, contentPanel).mostrar();
         } else {
             showDefaultContent(buttonName);
         }

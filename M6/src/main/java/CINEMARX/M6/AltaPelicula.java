@@ -47,15 +47,11 @@ public class AltaPelicula {
         gbc.gridx = 0; gbc.gridy = 2;
         formPanel.add(UIHelpers.createLabel("Clasificación de Edad:"), gbc);
         gbc.gridx = 1;
-        JTextField clasificacionField = UIHelpers.createTextField();
-        formPanel.add(clasificacionField, gbc);
-
-        // Estado
-        gbc.gridx = 0; gbc.gridy = 3;
-        formPanel.add(UIHelpers.createLabel("Estado:"), gbc);
-        gbc.gridx = 1;
-        JTextField estadoField = UIHelpers.createTextField();
-        formPanel.add(estadoField, gbc);
+        String[] clasificaciones = {"ATP", "ATP13", "ATP16", "R18"};
+        JComboBox<String> clasificacionCombo = new JComboBox<>(clasificaciones);
+        UIHelpers.styleComboBox(clasificacionCombo);
+        formPanel.add(clasificacionCombo, gbc);
+        clasificacionCombo.setForeground(Color.BLACK);
 
         // Botón
         gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 2;
@@ -66,34 +62,37 @@ public class AltaPelicula {
             try {
                 String titulo = tituloField.getText().trim();
                 String genero = generoField.getText().trim();
-                String clasificacion = clasificacionField.getText().trim();
-                String estado = estadoField.getText().trim();
+                String clasificacion = (String) clasificacionCombo.getSelectedItem();
 
                 if (titulo.isEmpty()) {
                     JOptionPane.showMessageDialog(mainFrame, "El título es obligatorio", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                if (clasificacion == null || clasificacion.isEmpty()) {
+                    JOptionPane.showMessageDialog(mainFrame, "La clasificación de edad es obligatoria", "Error", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
                 // Generar nombre de imagen automáticamente
                 String imagenNombre = UIHelpers.generarNombreImagen(titulo);
 
-                String query = "INSERT INTO Pelicula (Titulo, Genero, ClasificacionEdad, Estado, Imagen) VALUES (?, ?, ?, ?, ?)";
+                String query = "INSERT INTO Pelicula (Titulo, Genero, ClasificacionEdad, Estado, Imagen) VALUES (?, ?, ?, 'Proximamente', ?)";
 
                 try (PreparedStatement pstmt = mainFrame.getConnection().prepareStatement(query)) {
                     pstmt.setString(1, titulo);
                     pstmt.setString(2, genero.isEmpty() ? null : genero);
-                    pstmt.setString(3, clasificacion.isEmpty() ? null : clasificacion);
-                    pstmt.setString(4, estado.isEmpty() ? null : estado);
-                    pstmt.setString(5, imagenNombre);
+                    pstmt.setString(3, clasificacion);
+                    pstmt.setString(4, imagenNombre);
 
                     pstmt.executeUpdate();
-                    JOptionPane.showMessageDialog(mainFrame, "Película creada exitosamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                    Logger.log(mainFrame.getConnection(), "Alta de Película: Título=" + titulo);
+                    JOptionPane.showMessageDialog(mainFrame, "Película creada exitosamente con estado 'Proximamente'", "Éxito", JOptionPane.INFORMATION_MESSAGE);
 
                     // Limpiar campos
                     tituloField.setText("");
                     generoField.setText("");
-                    clasificacionField.setText("");
-                    estadoField.setText("");
+                    clasificacionCombo.setSelectedIndex(0);
                 }
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(mainFrame, "Error al crear película: " + ex.getMessage(), 

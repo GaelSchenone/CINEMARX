@@ -60,6 +60,7 @@ public class BajaPelicula {
                     try (PreparedStatement pstmt = mainFrame.getConnection().prepareStatement(query)) {
                         pstmt.setInt(1, pelicula.getId());
                         pstmt.executeUpdate();
+                        Logger.log(mainFrame.getConnection(), "Baja de Película: ID=" + pelicula.getId() + ", Título=" + pelicula.toString());
                         JOptionPane.showMessageDialog(mainFrame, "Película eliminada exitosamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
 
                         // Recargar ComboBox

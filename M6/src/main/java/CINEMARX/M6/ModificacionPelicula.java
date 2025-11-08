@@ -62,14 +62,11 @@ public class ModificacionPelicula {
         gbc.gridx = 0; gbc.gridy = 2;
         fieldsPanel.add(UIHelpers.createLabel("Clasificación:"), gbc);
         gbc.gridx = 1;
-        JTextField clasificacionField = UIHelpers.createTextField();
-        fieldsPanel.add(clasificacionField, gbc);
-
-        gbc.gridx = 0; gbc.gridy = 3;
-        fieldsPanel.add(UIHelpers.createLabel("Estado:"), gbc);
-        gbc.gridx = 1;
-        JTextField estadoField = UIHelpers.createTextField();
-        fieldsPanel.add(estadoField, gbc);
+        String[] clasificaciones = {"ATP", "ATP13", "ATP16", "R18"};
+        JComboBox<String> clasificacionCombo = new JComboBox<>(clasificaciones);
+        UIHelpers.styleComboBox(clasificacionCombo);
+        fieldsPanel.add(clasificacionCombo, gbc);
+        clasificacionCombo.setForeground(Color.BLACK);
 
         formPanel.add(fieldsPanel);
         formPanel.add(Box.createRigidArea(new Dimension(0, 20)));
@@ -82,14 +79,14 @@ public class ModificacionPelicula {
         peliculaCombo.addActionListener(e -> {
             PeliculaItem pelicula = (PeliculaItem) peliculaCombo.getSelectedItem();
             if (pelicula != null) {
-                cargarDatosPelicula(pelicula.getId(), tituloField, generoField, clasificacionField, estadoField);
+                cargarDatosPelicula(pelicula.getId(), tituloField, generoField, clasificacionCombo);
             }
         });
 
         // Cargar datos iniciales
         if (peliculaCombo.getItemCount() > 0) {
             PeliculaItem firstPelicula = peliculaCombo.getItemAt(0);
-            cargarDatosPelicula(firstPelicula.getId(), tituloField, generoField, clasificacionField, estadoField);
+            cargarDatosPelicula(firstPelicula.getId(), tituloField, generoField, clasificacionCombo);
         }
 
         actualizarBtn.addActionListener(e -> {
@@ -101,26 +98,32 @@ public class ModificacionPelicula {
 
             try {
                 String nuevoTitulo = tituloField.getText().trim();
+                String clasificacion = (String) clasificacionCombo.getSelectedItem();
 
                 if (nuevoTitulo.isEmpty()) {
                     JOptionPane.showMessageDialog(mainFrame, "El título es obligatorio", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                
+                if (clasificacion == null || clasificacion.isEmpty()) {
+                    JOptionPane.showMessageDialog(mainFrame, "La clasificación de edad es obligatoria", "Error", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
                 // Generar nuevo nombre de imagen basado en el nuevo título
                 String nuevaImagen = UIHelpers.generarNombreImagen(nuevoTitulo);
 
-                String query = "UPDATE Pelicula SET Titulo = ?, Genero = ?, ClasificacionEdad = ?, Estado = ?, Imagen = ? WHERE ID_Pelicula = ?";
+                String query = "UPDATE Pelicula SET Titulo = ?, Genero = ?, ClasificacionEdad = ?, Imagen = ? WHERE ID_Pelicula = ?";
 
                 try (PreparedStatement pstmt = mainFrame.getConnection().prepareStatement(query)) {
                     pstmt.setString(1, nuevoTitulo);
                     pstmt.setString(2, generoField.getText().trim());
-                    pstmt.setString(3, clasificacionField.getText().trim());
-                    pstmt.setString(4, estadoField.getText().trim());
-                    pstmt.setString(5, nuevaImagen);
-                    pstmt.setInt(6, pelicula.getId());
+                    pstmt.setString(3, clasificacion);
+                    pstmt.setString(4, nuevaImagen);
+                    pstmt.setInt(5, pelicula.getId());
 
                     pstmt.executeUpdate();
+                    Logger.log(mainFrame.getConnection(), "Modificación de Película: ID=" + pelicula.getId() + ", Nuevo Título=" + nuevoTitulo);
                     JOptionPane.showMessageDialog(mainFrame, "Película actualizada exitosamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
 
                     // Recargar ComboBox
@@ -138,9 +141,9 @@ public class ModificacionPelicula {
     }
     
     private void cargarDatosPelicula(int idPelicula, JTextField tituloField, JTextField generoField, 
-                                     JTextField clasificacionField, JTextField estadoField) {
+                                     JComboBox<String> clasificacionCombo) {
         try {
-            String query = "SELECT Titulo, Genero, ClasificacionEdad, Estado FROM Pelicula WHERE ID_Pelicula = ?";
+            String query = "SELECT Titulo, Genero, ClasificacionEdad FROM Pelicula WHERE ID_Pelicula = ?";
 
             try (PreparedStatement pstmt = mainFrame.getConnection().prepareStatement(query)) {
                 pstmt.setInt(1, idPelicula);
@@ -149,8 +152,12 @@ public class ModificacionPelicula {
                 if (rs.next()) {
                     tituloField.setText(rs.getString("Titulo"));
                     generoField.setText(rs.getString("Genero") != null ? rs.getString("Genero") : "");
-                    clasificacionField.setText(rs.getString("ClasificacionEdad") != null ? rs.getString("ClasificacionEdad") : "");
-                    estadoField.setText(rs.getString("Estado") != null ? rs.getString("Estado") : "");
+                    String clasificacion = rs.getString("ClasificacionEdad");
+                    if (clasificacion != null) {
+                        clasificacionCombo.setSelectedItem(clasificacion);
+                    } else {
+                        clasificacionCombo.setSelectedIndex(0); // Seleccionar el primer elemento por defecto
+                    }
                 }
             }
         } catch (SQLException e) {
@@ -158,5 +165,4 @@ public class ModificacionPelicula {
                 "Error", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
-    }
-}
+    }}

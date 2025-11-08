@@ -97,4 +97,22 @@ public class UIHelpers {
 
         return nombreImagen;
     }
+
+    public static void styleTable(JTable table) {
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        table.setForeground(M6.TEXT_COLOR);
+        table.setBackground(new Color(40, 40, 40));
+        table.setGridColor(new Color(60, 60, 60));
+        table.setRowHeight(30);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        table.getTableHeader().setBackground(new Color(60, 60, 60));
+        table.getTableHeader().setForeground(M6.TEXT_COLOR);
+    }
+
+    public static void styleScrollPane(JScrollPane scrollPane) {
+        scrollPane.setBackground(M6.BACKGROUND_COLOR);
+        scrollPane.getViewport().setBackground(new Color(40, 40, 40));
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+    }
 }

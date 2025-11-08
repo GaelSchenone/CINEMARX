@@ -106,4 +106,16 @@ public class DatabaseHelper {
             e.printStackTrace();
         }
     }
+
+    public static boolean isPeliculaInFuncion(Connection connection, int idPelicula) throws SQLException {
+        String query = "SELECT COUNT(*) FROM Funcion WHERE ID_Pelicula = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setInt(1, idPelicula);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        }
+        return false;
+    }
 }

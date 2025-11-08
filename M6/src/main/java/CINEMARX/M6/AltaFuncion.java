@@ -43,13 +43,6 @@ public class AltaFuncion {
         JTextField fechaField = UIHelpers.createTextField();
         formPanel.add(fechaField, gbc);
 
-        // Estado
-        gbc.gridx = 0; gbc.gridy = 2;
-        formPanel.add(UIHelpers.createLabel("Estado:"), gbc);
-        gbc.gridx = 1;
-        JTextField estadoField = UIHelpers.createTextField();
-        formPanel.add(estadoField, gbc);
-
         // Película
         gbc.gridx = 0; gbc.gridy = 3;
         formPanel.add(UIHelpers.createLabel("Película:"), gbc);
@@ -89,7 +82,6 @@ public class AltaFuncion {
             try {
                 String hora = horaField.getText().trim();
                 String fecha = fechaField.getText().trim();
-                String estado = estadoField.getText().trim();
                 PeliculaItem pelicula = (PeliculaItem) peliculaCombo.getSelectedItem();
                 SalaItem sala = (SalaItem) salaCombo.getSelectedItem();
                 CarteleraItem cartelera = (CarteleraItem) carteleraCombo.getSelectedItem();
@@ -100,24 +92,37 @@ public class AltaFuncion {
                     return;
                 }
 
-                String query = "INSERT INTO Funcion (HoraFuncion, FechaFuncion, Estado, ID_Pelicula, ID_Sala, ID_Cartelera) " +
-                              "VALUES (?, ?, ?, ?, ?, ?)";
+                String query = "INSERT INTO Funcion (HoraFuncion, FechaFuncion, ID_Pelicula, ID_Sala, ID_Cartelera) " +
+                              "VALUES (?, ?, ?, ?, ?)";
 
-                try (PreparedStatement pstmt = mainFrame.getConnection().prepareStatement(query)) {
+                try (PreparedStatement pstmt = mainFrame.getConnection().prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
                     pstmt.setString(1, hora);
                     pstmt.setString(2, fecha);
-                    pstmt.setString(3, estado.isEmpty() ? null : estado);
-                    pstmt.setInt(4, pelicula.getId());
-                    pstmt.setInt(5, sala.getId());
-                    pstmt.setInt(6, cartelera.getId());
+                    pstmt.setInt(3, pelicula.getId());
+                    pstmt.setInt(4, sala.getId());
+                    pstmt.setInt(5, cartelera.getId());
 
                     pstmt.executeUpdate();
-                    JOptionPane.showMessageDialog(mainFrame, "Función creada exitosamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+
+                    int idFuncion = -1;
+                    ResultSet generatedKeys = pstmt.getGeneratedKeys();
+                    if (generatedKeys.next()) {
+                        idFuncion = generatedKeys.getInt(1);
+                    }
+
+                    // Actualizar estado de la película a "En Cartelera"
+                    String updateQuery = "UPDATE Pelicula SET Estado = 'En Cartelera' WHERE ID_Pelicula = ?";
+                    try (PreparedStatement updateStmt = mainFrame.getConnection().prepareStatement(updateQuery)) {
+                        updateStmt.setInt(1, pelicula.getId());
+                        updateStmt.executeUpdate();
+                    }
+
+                    Logger.log(mainFrame.getConnection(), "Alta de Función: ID=" + idFuncion);
+                    JOptionPane.showMessageDialog(mainFrame, "Función creada y película actualizada a 'En Cartelera'", "Éxito", JOptionPane.INFORMATION_MESSAGE);
 
                     // Limpiar campos
                     horaField.setText("");
                     fechaField.setText("");
-                    estadoField.setText("");
                 }
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(mainFrame, "Error al crear función: " + ex.getMessage(), 

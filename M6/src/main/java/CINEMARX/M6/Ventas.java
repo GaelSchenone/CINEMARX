@@ -184,15 +184,16 @@ public class Ventas {
 
         return panel;
     }
-
     private void cargarDatosVentas(JPanel ventasTotalesPanel, JPanel ventasBoletosPanel, JPanel ventasProductosPanel) {
         DecimalFormat df = new DecimalFormat("#,##0.00");
 
         try {
             // Calcular ventas totales de boletos
-            String queryBoletos = "SELECT SUM(cb.Cantidad * b.Precio) as TotalBoletos, SUM(cb.Cantidad) as CantidadBoletos " +
+            // Nueva lógica: sumar (cantidad de boletos por función * precio de la función)
+            String queryBoletos = "SELECT SUM(cb.Cantidad * f.Precio) as TotalBoletos, SUM(cb.Cantidad) as CantidadBoletos " +
                                  "FROM Comprobante_Boleto cb " +
-                                 "INNER JOIN Boleto b ON cb.ID_Boleto = b.ID_Boleto";
+                                 "INNER JOIN Boleto b ON cb.ID_Boleto = b.ID_Boleto " +
+                                 "INNER JOIN Funcion f ON b.ID_Funcion = f.ID_Funcion";
 
             double totalBoletos = 0;
             int cantidadBoletos = 0;
@@ -205,7 +206,7 @@ public class Ventas {
                 }
             }
 
-            // Calcular ventas totales de productos
+            // Calcular ventas totales de productos (sin cambios)
             String queryProductos = "SELECT SUM(cp.Cantidad * p.Precio) as TotalProductos, SUM(cp.Cantidad) as CantidadProductos " +
                                    "FROM Comprobante_Producto cp " +
                                    "INNER JOIN Producto p ON cp.ID_Prod = p.ID_Prod";
@@ -264,19 +265,25 @@ public class Ventas {
         DecimalFormat df = new DecimalFormat("#,##0.00");
 
         try {
-            String query = "SELECT COUNT(b.ID_Boleto) as Cantidad, SUM(b.Precio) as Total " +
-                          "FROM Boleto b " +
-                          "WHERE b.ID_Funcion = ?";
+            // Nueva lógica: contar boletos y multiplicar por el precio de la función
+            String query = "SELECT f.Precio, " +
+                          "COALESCE(SUM(cb.Cantidad), 0) as CantidadBoletos " +
+                          "FROM Funcion f " +
+                          "LEFT JOIN Boleto b ON f.ID_Funcion = b.ID_Funcion " +
+                          "LEFT JOIN Comprobante_Boleto cb ON b.ID_Boleto = cb.ID_Boleto " +
+                          "WHERE f.ID_Funcion = ? " +
+                          "GROUP BY f.ID_Funcion, f.Precio";
 
             try (PreparedStatement pstmt = mainFrame.getConnection().prepareStatement(query)) {
                 pstmt.setInt(1, idFuncion);
                 ResultSet rs = pstmt.executeQuery();
 
                 if (rs.next()) {
-                    int cantidad = rs.getInt("Cantidad");
-                    double total = rs.getDouble("Total");
+                    double precio = rs.getDouble("Precio");
+                    int cantidadBoletos = rs.getInt("CantidadBoletos");
+                    double total = precio * cantidadBoletos;
 
-                    cantidadLabel.setText("Cantidad de boletos: " + cantidad);
+                    cantidadLabel.setText("Cantidad de boletos: " + cantidadBoletos);
                     dineroLabel.setText("Dinero obtenido: $" + df.format(total));
                 } else {
                     cantidadLabel.setText("Cantidad de boletos: 0");

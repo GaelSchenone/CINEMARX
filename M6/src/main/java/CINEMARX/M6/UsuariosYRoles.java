@@ -27,15 +27,15 @@ public class UsuariosYRoles {
         titleLabel.setForeground(M6.TEXT_COLOR);
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Panel para la tabla (MÁS ANGOSTO)
+        // Panel para la tabla (MÁS ANCHO)
         JPanel tablePanel = new JPanel(new BorderLayout());
         tablePanel.setBackground(M6.BACKGROUND_COLOR);
         tablePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        tablePanel.setMaximumSize(new Dimension(452, 400));  // Cambiado de 1100 a 900
-        tablePanel.setPreferredSize(new Dimension(452, 400));
+        tablePanel.setMaximumSize(new Dimension(800, 400));  // Aumentado el ancho
+        tablePanel.setPreferredSize(new Dimension(800, 400));
 
         // Crear tabla
-        String[] columnNames = {"ID Cliente", "DNI", "Nombre", "Apellido", "Membresía", "Boletos Comprados"};
+        String[] columnNames = {"ID Cliente", "DNI", "Nombre", "Apellido", "Membresía", "Boletos Comprados", "Mail", "Contraseña"};
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -44,7 +44,7 @@ public class UsuariosYRoles {
         };
 
         // Agregar fila de encabezado
-        Object[] headerRow = {"ID Cliente", "DNI", "Nombre", "Apellido", "Membresía", "Boletos Comprados"};
+        Object[] headerRow = {"ID Cliente", "DNI", "Nombre", "Apellido", "Membresía", "Boletos Comprados", "Mail", "Contraseña"};
         tableModel.addRow(headerRow);
 
         JTable table = new JTable(tableModel);
@@ -58,8 +58,16 @@ public class UsuariosYRoles {
         // Ocultar encabezado de tabla
         table.setTableHeader(null);
 
-        // Habilitar scroll horizontal
+        // Habilitar scroll horizontal y ajustar anchos de columna
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        table.getColumnModel().getColumn(0).setPreferredWidth(80);  // ID Cliente
+        table.getColumnModel().getColumn(1).setPreferredWidth(80);  // DNI
+        table.getColumnModel().getColumn(2).setPreferredWidth(120); // Nombre
+        table.getColumnModel().getColumn(3).setPreferredWidth(120); // Apellido
+        table.getColumnModel().getColumn(4).setPreferredWidth(100); // Membresía
+        table.getColumnModel().getColumn(5).setPreferredWidth(120); // Boletos Comprados
+        table.getColumnModel().getColumn(6).setPreferredWidth(200); // Mail (más ancho)
+        table.getColumnModel().getColumn(7).setPreferredWidth(100); // Contraseña
 
         // SCROLL CON HORIZONTAL Y VERTICAL
         JScrollPane scrollPane = new JScrollPane(table);
@@ -76,8 +84,10 @@ public class UsuariosYRoles {
         buttonPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JButton verMetodosBtn = UIHelpers.createButton("Ver Métodos de Pago");
+        JButton reportesBtn = UIHelpers.createButton("Reportes");
 
         buttonPanel.add(verMetodosBtn);
+        buttonPanel.add(reportesBtn);
 
         // Listener del botón
         verMetodosBtn.addActionListener(e -> {
@@ -93,6 +103,24 @@ public class UsuariosYRoles {
             String nombreCompleto = tableModel.getValueAt(selectedRow, 2) + " " + 
                                    tableModel.getValueAt(selectedRow, 3);
             abrirVentanaMetodosPago(idCliente, nombreCompleto);
+        });
+
+        reportesBtn.addActionListener(e -> {
+            try {
+                int selectedRow = table.getSelectedRow();
+                if (selectedRow == -1 || selectedRow == 0) { // 0 es el header
+                    JOptionPane.showMessageDialog(mainFrame,
+                            "Seleccione un cliente para ver su reporte",
+                            "Advertencia", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                
+                int idCliente = (int) tableModel.getValueAt(selectedRow, 0);
+                ReporteCliente reporte = new ReporteCliente(mainFrame, mainFrame.getConnection(), idCliente);
+                reporte.setVisible(true);
+            } catch (SQLException ex) {
+                System.getLogger(UsuariosYRoles.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+            }
         });
 
         // Agregar componentes al contenedor
@@ -119,7 +147,7 @@ public class UsuariosYRoles {
     private void cargarClientes(DefaultTableModel tableModel) {
         // Limpiar tabla manteniendo el header
         tableModel.setRowCount(0);
-        Object[] headerRow = {"ID Cliente", "DNI", "Nombre", "Apellido", "Membresía", "Boletos Comprados"};
+        Object[] headerRow = {"ID Cliente", "DNI", "Nombre", "Apellido", "Membresía", "Boletos Comprados", "Mail", "Contraseña"};
         tableModel.addRow(headerRow);
         
         try {
@@ -128,26 +156,32 @@ public class UsuariosYRoles {
                           "u.DNI, " +
                           "u.Nombre, " +
                           "u.Apellido, " +
+                          "c.Mail, " +
+                          "c.Contrasena, " +
                           "c.Membresia, " +
                           "COALESCE(SUM(cb.Cantidad), 0) as TotalBoletos " +
                           "FROM Cliente c " +
                           "INNER JOIN Usuario u ON c.DNI = u.DNI " +
                           "LEFT JOIN Comprobante comp ON c.ID_Cliente = comp.ID_Cliente " +
                           "LEFT JOIN Comprobante_Boleto cb ON comp.ID_Comprobante = cb.ID_Comprobante " +
-                          "GROUP BY c.ID_Cliente, u.DNI, u.Nombre, u.Apellido, c.Membresia " +
+                          "GROUP BY c.ID_Cliente, u.DNI, u.Nombre, u.Apellido, c.Membresia, c.Mail, c.Contrasena " +
                           "ORDER BY c.ID_Cliente";
             
             try (Statement stmt = mainFrame.getConnection().createStatement();
                  ResultSet rs = stmt.executeQuery(query)) {
                 
                 while (rs.next()) {
+                    String password = rs.getString("Contrasena");
+                    String censoredPassword = "****" + password.substring(password.length() - 3);
                     Object[] row = {
                         rs.getInt("ID_Cliente"),
                         rs.getInt("DNI"),
                         rs.getString("Nombre"),
                         rs.getString("Apellido"),
                         rs.getString("Membresia"),
-                        rs.getInt("TotalBoletos")
+                        rs.getInt("TotalBoletos"),
+                        rs.getString("Mail"),
+                        censoredPassword
                     };
                     tableModel.addRow(row);
                 }

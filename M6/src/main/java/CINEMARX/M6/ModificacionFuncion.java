@@ -61,12 +61,6 @@ public class ModificacionFuncion {
         JTextField fechaField = UIHelpers.createTextField();
         fieldsPanel.add(fechaField, gbc);
 
-        gbc.gridx = 0; gbc.gridy = 2;
-        fieldsPanel.add(UIHelpers.createLabel("Estado:"), gbc);
-        gbc.gridx = 1;
-        JTextField estadoField = UIHelpers.createTextField();
-        fieldsPanel.add(estadoField, gbc);
-
         gbc.gridx = 0; gbc.gridy = 3;
         fieldsPanel.add(UIHelpers.createLabel("Película:"), gbc);
         gbc.gridx = 1;
@@ -105,7 +99,7 @@ public class ModificacionFuncion {
         funcionCombo.addActionListener(e -> {
             FuncionItem funcion = (FuncionItem) funcionCombo.getSelectedItem();
             if (funcion != null) {
-                cargarDatosFuncion(funcion.getId(), horaField, fechaField, estadoField, 
+                cargarDatosFuncion(funcion.getId(), horaField, fechaField, 
                                   peliculaCombo, salaCombo, carteleraCombo);
             }
         });
@@ -113,7 +107,7 @@ public class ModificacionFuncion {
         // Cargar datos iniciales
         if (funcionCombo.getItemCount() > 0) {
             FuncionItem firstFuncion = funcionCombo.getItemAt(0);
-            cargarDatosFuncion(firstFuncion.getId(), horaField, fechaField, estadoField, 
+            cargarDatosFuncion(firstFuncion.getId(), horaField, fechaField, 
                               peliculaCombo, salaCombo, carteleraCombo);
         }
 
@@ -125,20 +119,35 @@ public class ModificacionFuncion {
             }
 
             try {
-                String query = "UPDATE Funcion SET HoraFuncion = ?, FechaFuncion = ?, Estado = ?, " +
+                // Obtener el ID de la película original
+                int oldPeliculaId = getOldPeliculaId(funcion.getId());
+
+                String query = "UPDATE Funcion SET HoraFuncion = ?, FechaFuncion = ?, " +
                               "ID_Pelicula = ?, ID_Sala = ?, ID_Cartelera = ? WHERE ID_Funcion = ?";
 
                 try (PreparedStatement pstmt = mainFrame.getConnection().prepareStatement(query)) {
                     pstmt.setString(1, horaField.getText().trim());
                     pstmt.setString(2, fechaField.getText().trim());
-                    pstmt.setString(3, estadoField.getText().trim());
-                    pstmt.setInt(4, ((PeliculaItem) peliculaCombo.getSelectedItem()).getId());
-                    pstmt.setInt(5, ((SalaItem) salaCombo.getSelectedItem()).getId());
-                    pstmt.setInt(6, ((CarteleraItem) carteleraCombo.getSelectedItem()).getId());
-                    pstmt.setInt(7, funcion.getId());
+                    int newPeliculaId = ((PeliculaItem) peliculaCombo.getSelectedItem()).getId();
+                    pstmt.setInt(3, newPeliculaId);
+                    pstmt.setInt(4, ((SalaItem) salaCombo.getSelectedItem()).getId());
+                    pstmt.setInt(5, ((CarteleraItem) carteleraCombo.getSelectedItem()).getId());
+                    pstmt.setInt(6, funcion.getId());
 
                     pstmt.executeUpdate();
-                    JOptionPane.showMessageDialog(mainFrame, "Función actualizada exitosamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+
+                    // Actualizar estado de la nueva película a "En Cartelera"
+                    updatePeliculaStatus(newPeliculaId, "En Cartelera");
+
+                    // Verificar si la película anterior debe cambiar su estado
+                    if (oldPeliculaId != -1 && oldPeliculaId != newPeliculaId) {
+                        if (!DatabaseHelper.isPeliculaInFuncion(mainFrame.getConnection(), oldPeliculaId)) {
+                            updatePeliculaStatus(oldPeliculaId, "Proximamente");
+                        }
+                    }
+
+                    Logger.log(mainFrame.getConnection(), "Modificación de Función: ID=" + funcion.getId());
+                    JOptionPane.showMessageDialog(mainFrame, "Función actualizada y estados de películas actualizados", "Éxito", JOptionPane.INFORMATION_MESSAGE);
 
                     // Recargar ComboBox
                     funcionCombo.removeAllItems();
@@ -155,10 +164,10 @@ public class ModificacionFuncion {
     }
     
     private void cargarDatosFuncion(int idFuncion, JTextField horaField, JTextField fechaField, 
-                                    JTextField estadoField, JComboBox<PeliculaItem> peliculaCombo, 
+                                    JComboBox<PeliculaItem> peliculaCombo, 
                                     JComboBox<SalaItem> salaCombo, JComboBox<CarteleraItem> carteleraCombo) {
         try {
-            String query = "SELECT HoraFuncion, FechaFuncion, Estado, ID_Pelicula, ID_Sala, ID_Cartelera " +
+            String query = "SELECT HoraFuncion, FechaFuncion, ID_Pelicula, ID_Sala, ID_Cartelera " +
                           "FROM Funcion WHERE ID_Funcion = ?";
 
             try (PreparedStatement pstmt = mainFrame.getConnection().prepareStatement(query)) {
@@ -168,7 +177,6 @@ public class ModificacionFuncion {
                 if (rs.next()) {
                     horaField.setText(rs.getString("HoraFuncion"));
                     fechaField.setText(rs.getString("FechaFuncion"));
-                    estadoField.setText(rs.getString("Estado") != null ? rs.getString("Estado") : "");
 
                     // Seleccionar película
                     int idPelicula = rs.getInt("ID_Pelicula");
@@ -202,6 +210,27 @@ public class ModificacionFuncion {
             JOptionPane.showMessageDialog(mainFrame, "Error al cargar datos de función: " + e.getMessage(), 
                 "Error", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
+        }
+    }
+
+    private int getOldPeliculaId(int idFuncion) throws SQLException {
+        String query = "SELECT ID_Pelicula FROM Funcion WHERE ID_Funcion = ?";
+        try (PreparedStatement pstmt = mainFrame.getConnection().prepareStatement(query)) {
+            pstmt.setInt(1, idFuncion);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("ID_Pelicula");
+            }
+        }
+        return -1;
+    }
+
+    private void updatePeliculaStatus(int idPelicula, String status) throws SQLException {
+        String query = "UPDATE Pelicula SET Estado = ? WHERE ID_Pelicula = ?";
+        try (PreparedStatement pstmt = mainFrame.getConnection().prepareStatement(query)) {
+            pstmt.setString(1, status);
+            pstmt.setInt(2, idPelicula);
+            pstmt.executeUpdate();
         }
     }
 }

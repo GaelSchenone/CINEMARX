@@ -103,8 +103,8 @@ public class Peliculas {
             BorderFactory.createLineBorder(new Color(60, 60, 60), 1),
             BorderFactory.createEmptyBorder(10, 10, 10, 10)
         ));
-        card.setPreferredSize(new Dimension(200, 320));
-        card.setMaximumSize(new Dimension(200, 320));
+        card.setPreferredSize(new Dimension(200, 360));
+        card.setMaximumSize(new Dimension(200, 360));
         
         // Contenedor para la imagen con GridBagLayout para centrar
         JPanel imagePanel = new JPanel(new GridBagLayout());
@@ -123,9 +123,23 @@ public class Peliculas {
         tituloLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         tituloLabel.setHorizontalAlignment(SwingConstants.CENTER);
         
+        // Botón de reportes
+        JButton reportesButton = new JButton("Reportes");
+        reportesButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        reportesButton.addActionListener(e -> {
+            try {
+                ReportePelicula reporte = new ReportePelicula(mainFrame, mainFrame.getConnection(), idPelicula);
+                reporte.setVisible(true);
+            } catch (SQLException ex) {
+                System.getLogger(Peliculas.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+            }
+        });
+
         card.add(imagePanel);
         card.add(Box.createRigidArea(new Dimension(0, 10)));
         card.add(tituloLabel);
+        card.add(Box.createRigidArea(new Dimension(0, 5)));
+        card.add(reportesButton);
         
         return card;
     }

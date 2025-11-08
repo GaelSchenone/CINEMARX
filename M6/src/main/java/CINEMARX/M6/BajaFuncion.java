@@ -61,6 +61,7 @@ public class BajaFuncion {
                     try (PreparedStatement pstmt = mainFrame.getConnection().prepareStatement(query)) {
                         pstmt.setInt(1, funcion.getId());
                         pstmt.executeUpdate();
+                        Logger.log(mainFrame.getConnection(), "Baja de Función: ID=" + funcion.getId());
                         JOptionPane.showMessageDialog(mainFrame, "Función eliminada exitosamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
 
                         // Recargar ComboBox
