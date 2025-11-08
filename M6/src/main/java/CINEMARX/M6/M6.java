@@ -118,6 +118,8 @@ public class M6 extends JFrame {
             new Peliculas(this, contentPanel).mostrar();
         } else if (buttonName.equals("Salas")){
             new Salas(this, contentPanel).mostrar();
+        } else if (buttonName.equals("Productos")){
+            new Productos(this, contentPanel).mostrar();
         } else if (buttonName.equals("Logs de acciones")){
             new Logs(this, contentPanel).mostrar();
         } else {
@@ -209,11 +211,17 @@ add(topBarPanel, BorderLayout.NORTH);
         sidebarPanel.setPreferredSize(new Dimension(280, getHeight()));
         sidebarPanel.setBorder(BorderFactory.createEmptyBorder(20, 15, 20, 15));
         
+        JScrollPane scrollPane = new JScrollPane(sidebarPanel);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setBorder(null);
+        
         addSectionTitle("Gestión");
         addMenuButton("Clientes y Roles", "https://gaelschenone.aguilucho.ar/source_cmx/index.php?preview=botones%2FM6%2Fuser.png");
         addMenuButton("Películas", "https://gaelschenone.aguilucho.ar/source_cmx/index.php?preview=botones%2FM6%2Fvideo.png");
         addMenuButton("Personal", "https://gaelschenone.aguilucho.ar/source_cmx/index.php?preview=botones%2FM6%2Fstaff.png");
         addMenuButton("Salas", "https://gaelschenone.aguilucho.ar/source_cmx/index.php?preview=botones%2FM6%2Fsala.png");
+        addMenuButton("Productos", "https://gaelschenone.aguilucho.ar/source_cmx/index.php?preview=botones%2FM6%2Fprod.png");
         
         addSeparator();
         
@@ -227,7 +235,7 @@ add(topBarPanel, BorderLayout.NORTH);
         addSectionTitle("Seguridad");
         addMenuButton("Logs de acciones", "https://gaelschenone.aguilucho.ar/source_cmx/index.php?preview=botones%2FM6%2Flogs.png");
         
-        add(sidebarPanel, BorderLayout.WEST);
+        add(scrollPane, BorderLayout.WEST);
     }
     
     private void addSectionTitle(String title) {

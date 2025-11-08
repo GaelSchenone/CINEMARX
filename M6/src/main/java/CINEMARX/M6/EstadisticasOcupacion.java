@@ -2,6 +2,7 @@ package CINEMARX.M6;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.sql.*;
 
@@ -16,6 +17,8 @@ public class EstadisticasOcupacion {
 
     private M6 mainFrame;
     private JPanel contentPanel;
+    private final String[] COLUMN_NAMES = {"ID Función", "Película", "Fecha", "Hora", "Butacas Ocup.", "Total Butac."};
+
 
     public EstadisticasOcupacion(M6 mainFrame, JPanel contentPanel) {
         this.mainFrame = mainFrame;
@@ -49,8 +52,23 @@ public class EstadisticasOcupacion {
         JComboBox<SalaItem> salaComboBox = new JComboBox<>();
         salaComboBox.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         salaComboBox.setPreferredSize(new Dimension(250, 35));
-        salaComboBox.setBackground(Color.WHITE);
-        salaComboBox.setForeground(Color.BLACK);
+        salaComboBox.setBackground(M6.BUTTON_COLOR); // Styled
+        salaComboBox.setForeground(M6.TEXT_COLOR); // Styled
+        salaComboBox.setRenderer(new DefaultListCellRenderer() { // Styled
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (isSelected) {
+                    setBackground(M6.ACCENT_COLOR.darker());
+                    setForeground(Color.WHITE);
+                } else {
+                    setBackground(M6.BUTTON_COLOR);
+                    setForeground(M6.TEXT_COLOR);
+                }
+                return this;
+            }
+        });
+        salaComboBox.setBorder(BorderFactory.createLineBorder(M6.SIDEBAR_COLOR)); // Styled
 
         comboPanel.add(salaLabel);
         comboPanel.add(salaComboBox);
@@ -65,15 +83,28 @@ public class EstadisticasOcupacion {
         mainPanel.add(Box.createVerticalStrut(10));
 
         // --- Tabla ---
-        String[] columnNames = {"ID Función", "Película", "Fecha", "Hora", "Butacas Ocup.", "Total Butac."};
-        DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0);
+        DefaultTableModel tableModel = new DefaultTableModel(COLUMN_NAMES, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
         JTable tabla = new JTable(tableModel);
-        tabla.setBackground(Color.WHITE);
-        tabla.setForeground(Color.BLACK);
-        tabla.setRowHeight(25);
+        tabla.setBackground(M6.SIDEBAR_COLOR); // Styled
+        tabla.setForeground(M6.TEXT_COLOR); // Styled
+        tabla.setSelectionBackground(M6.ACCENT_COLOR.darker()); // Styled
+        tabla.setSelectionForeground(Color.WHITE); // Styled
+        tabla.setGridColor(M6.BACKGROUND_COLOR); // Styled
+        tabla.setFont(new Font("Segoe UI", Font.PLAIN, 14)); // Styled
+        tabla.setRowHeight(25); // Styled
+
+        // Hide Table Header
+        tabla.setTableHeader(null);
 
         JScrollPane tableScrollPane = new JScrollPane(tabla);
         tableScrollPane.setPreferredSize(new Dimension(700, 200));
+        tableScrollPane.getViewport().setBackground(M6.BACKGROUND_COLOR); // Styled
+        tableScrollPane.setBorder(BorderFactory.createLineBorder(M6.SIDEBAR_COLOR, 1)); // Styled
         mainPanel.add(tableScrollPane);
         mainPanel.add(Box.createVerticalStrut(20));
 
@@ -93,7 +124,7 @@ public class EstadisticasOcupacion {
 
         // --- Scroll principal ---
         JScrollPane scrollPane = new JScrollPane(mainPanel);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS); // siempre visible
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
@@ -144,10 +175,8 @@ public class EstadisticasOcupacion {
 
     private void cargarEstadisticasSala(int idSala, DefaultTableModel tableModel, JPanel graficoPanel) {
         tableModel.setRowCount(0);
-
-        String[] columnNames = {"ID Función", "Película", "Fecha", "Hora", "Butacas Ocup.", "Total Butac."};
-        tableModel.setColumnIdentifiers(columnNames);
-
+        tableModel.addRow(COLUMN_NAMES); // Add column names as the first row
+        
         String query = "SELECT f.ID_Funcion, p.Titulo, f.FechaFuncion, f.HoraFuncion, " +
                        "s.CantButacas, COUNT(b.ID_Boleto) AS ButacasOcupadas " +
                        "FROM Funcion f " +
@@ -180,7 +209,7 @@ public class EstadisticasOcupacion {
                 totalOcupadas += butacasOcupadas;
             }
 
-            if (tableModel.getRowCount() == 0) {
+            if (tableModel.getRowCount() == 1) { // Only the header row exists
                 Object[] emptyRow = {"---", "No hay funciones para esta sala", "---", "---", "---", "---"};
                 tableModel.addRow(emptyRow);
             }
