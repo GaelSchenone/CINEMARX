@@ -9,12 +9,14 @@ class SalaItem {
     private int numero;
     private String tipo;
     private int cantButacas;
+    private String cineNombre;
     
-    public SalaItem(int id, int numero, String tipo, int cantButacas) {
+    public SalaItem(int id, int numero, String tipo, int cantButacas, String cineNombre) {
         this.id = id;
         this.numero = numero;
         this.tipo = tipo;
         this.cantButacas = cantButacas;
+        this.cineNombre = cineNombre;
     }
     
     public int getId() {
@@ -23,7 +25,7 @@ class SalaItem {
     
     @Override
     public String toString() {
-        return "Sala " + numero + " - " + tipo + " (" + cantButacas + " butacas)";
+        return cineNombre + " - Sala " + numero + " (" + tipo + ")";
     }
 }
 

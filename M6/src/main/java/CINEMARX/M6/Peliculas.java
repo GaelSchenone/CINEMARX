@@ -148,23 +148,44 @@ public class Peliculas {
         JLabel label = new JLabel();
         label.setHorizontalAlignment(SwingConstants.CENTER);
         label.setVerticalAlignment(SwingConstants.CENTER);
-        
+        label.setText("Cargando...");
+        label.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        label.setForeground(M6.FIELDTEXT_COLOR);
+
+        String imageUrl;
         try {
-            // Usar directamente el nombre de la columna Imagen
-            String imagenFinal = (nombreImagen != null && !nombreImagen.trim().isEmpty()) 
-                                ? nombreImagen.trim() 
-                                : "https://gaelschenone.aguilucho.ar/source_cmx/index.php?preview=botones%2FM6%2F"+"default.png";
-            
-            // URL de la imagen
-            String imageUrl = imagenFinal;
-            
+            imageUrl = (nombreImagen != null && !nombreImagen.trim().isEmpty()) 
+                       ? nombreImagen.trim() 
+                       : "https://gaelschenone.aguilucho.ar/source_cmx/index.php?preview=botones%2FM6%2Fdefault.png";
+        } catch (Exception e) {
+            imageUrl = "https://gaelschenone.aguilucho.ar/source_cmx/index.php?preview=botones%2FM6%2Fdefault.png";
+            System.err.println("URL de imagen inválida para: " + titulo);
+        }
+
+        ImageLoader worker = new ImageLoader(label, imageUrl, titulo);
+        worker.execute();
+        
+        return label;
+    }
+
+    // SwingWorker para cargar imágenes en segundo plano
+    private class ImageLoader extends SwingWorker<ImageIcon, Void> {
+        private JLabel label;
+        private String imageUrl;
+        private String titulo;
+
+        public ImageLoader(JLabel label, String imageUrl, String titulo) {
+            this.label = label;
+            this.imageUrl = imageUrl;
+            this.titulo = titulo;
+        }
+
+        @Override
+        protected ImageIcon doInBackground() throws Exception {
             URL imgURL = new URL(imageUrl);
-            InputStream imageIn = imgURL.openStream();
-            BufferedImage originalImage = ImageIO.read(imageIn);
-            imageIn.close();
+            BufferedImage originalImage = ImageIO.read(imgURL.openStream());
             
             if (originalImage != null) {
-                // Escalar imagen manteniendo aspecto
                 int originalWidth = originalImage.getWidth();
                 int originalHeight = originalImage.getHeight();
                 
@@ -179,19 +200,25 @@ public class Peliculas {
                 int newHeight = (int) (originalHeight * ratio);
                 
                 Image scaledImg = originalImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
-                label.setIcon(new ImageIcon(scaledImg));
-            } else {
-                throw new Exception("No se pudo cargar la imagen");
+                return new ImageIcon(scaledImg);
             }
-            
-        } catch (Exception e) {
-            // En caso de error, mostrar texto alternativo
-            label.setText("<html><div style='text-align: center; width: 180px;'>Imagen no disponible</div></html>");
-            label.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-            label.setForeground(M6.FIELDTEXT_COLOR);
-            System.err.println("Error cargando imagen para: " + titulo + " - " + e.getMessage());
+            return null;
         }
-        
-        return label;
+
+        @Override
+        protected void done() {
+            try {
+                ImageIcon scaledIcon = get();
+                if (scaledIcon != null) {
+                    label.setIcon(scaledIcon);
+                    label.setText(null); // Borrar texto "Cargando..."
+                } else {
+                    throw new Exception("No se pudo crear el ImageIcon");
+                }
+            } catch (Exception e) {
+                label.setText("<html><div style='text-align: center; width: 180px;'>Imagen no disponible</div></html>");
+                System.err.println("Error cargando imagen para: " + titulo + " - " + e.getMessage());
+            }
+        }
     }
 }

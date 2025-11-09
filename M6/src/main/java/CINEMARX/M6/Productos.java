@@ -64,7 +64,7 @@ public class Productos {
         addButton = createStyledButton("Alta");
         deleteButton = createStyledButton("Baja");
         updateButton = createStyledButton("Modificación");
-        salesByFunctionButton = createStyledButton("Venta por Función");
+        salesByFunctionButton = createStyledButton("Producto mas vendido");
 
         buttonPanel.add(addButton);
         buttonPanel.add(deleteButton);
@@ -83,13 +83,12 @@ public class Productos {
             boolean rowSelected = productTable.getSelectedRow() > 0;
             deleteButton.setEnabled(rowSelected);
             updateButton.setEnabled(rowSelected);
-            salesByFunctionButton.setEnabled(rowSelected);
         });
 
         // Initial button state
         deleteButton.setEnabled(false);
         updateButton.setEnabled(false);
-        salesByFunctionButton.setEnabled(false);
+        salesByFunctionButton.setEnabled(true); // Siempre habilitado
 
         loadProducts();
 
@@ -307,20 +306,13 @@ public class Productos {
     }
 
     private void showSalesByFunction() {
-        int selectedRow = productTable.getSelectedRow();
-        if (selectedRow <= 0) {
-            JOptionPane.showMessageDialog(contentPanel, "Por favor, seleccione un producto de la tabla.", "Advertencia", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        int productId = (int) tableModel.getValueAt(selectedRow, 0);
-        String productName = (String) tableModel.getValueAt(selectedRow, 1);
-
-        JDialog dialog = new JDialog(m6, "Ventas de " + productName + " por Función", true);
-        dialog.setSize(600, 400);
+        JDialog dialog = new JDialog(m6, "Resumen de Ventas por Función", true);
+        dialog.setSize(800, 500);
         dialog.setLocationRelativeTo(m6);
-        dialog.getContentPane().setBackground(M6.BACKGROUND_COLOR); // Set dialog background to black
+        dialog.getContentPane().setBackground(M6.BACKGROUND_COLOR);
 
-        DefaultTableModel salesTableModel = new DefaultTableModel(new String[]{"Función", "Cantidad Vendida"}, 0);
+        String[] columnNames = {"Función (Película, Fecha, Hora, Sala)", "Producto más Vendido"};
+        DefaultTableModel salesTableModel = new DefaultTableModel(columnNames, 0);
         JTable salesTable = new JTable(salesTableModel);
         salesTable.setBackground(M6.SIDEBAR_COLOR);
         salesTable.setForeground(M6.TEXT_COLOR);
@@ -329,44 +321,33 @@ public class Productos {
         salesTable.setGridColor(M6.BACKGROUND_COLOR);
         salesTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         salesTable.setRowHeight(25);
-        
-        JTableHeader header = salesTable.getTableHeader();
-        header.setBackground(M6.TOPBAR_COLOR);
-        header.setForeground(M6.TEXT_COLOR);
-        header.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        header.setPreferredSize(new Dimension(header.getWidth(), 30));
+        salesTable.setTableHeader(null); // Ocultar el header por defecto
 
-        try (Connection conn = m6.getConnection()) {
-            String sql = "SELECT CONCAT(p.Titulo, ' - ', f.FechaFuncion, ' ', f.HoraFuncion) AS Funcion, SUM(cp.Cantidad) AS CantidadVendida " +
-                         "FROM Comprobante_Producto cp " +
-                         "JOIN Comprobante c ON cp.ID_Comprobante = c.ID_Comprobante " +
-                         "JOIN Comprobante_Boleto cb ON c.ID_Comprobante = cb.ID_Comprobante " +
-                         "JOIN Boleto b ON cb.ID_Boleto = b.ID_Boleto " +
-                         "JOIN Funcion f ON b.ID_Funcion = f.ID_Funcion " +
-                         "JOIN Pelicula p ON f.ID_Pelicula = p.ID_Pelicula " +
-                         "WHERE cp.ID_Prod = ? " +
-                         "GROUP BY f.ID_Funcion, p.Titulo, f.FechaFuncion, f.HoraFuncion " +
-                         "HAVING SUM(cp.Cantidad) > 0 " +
-                         "ORDER BY CantidadVendida DESC";
-            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                pstmt.setInt(1, productId);
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    while (rs.next()) {
-                        Vector<Object> row = new Vector<>();
-                        row.add(rs.getString("Funcion"));
-                        row.add(rs.getInt("CantidadVendida"));
-                        salesTableModel.addRow(row);
-                    }
-                }
+        // Añadir el header como primera fila
+        salesTableModel.addRow(columnNames);
+
+        try (ResultSet rs = DatabaseHelper.getResumenVentasProductosPorFuncion(m6.getConnection())) {
+            while (rs.next()) {
+                String titulo = rs.getString("Titulo");
+                String fecha = rs.getString("FechaFuncion");
+                String hora = rs.getString("HoraFuncion");
+                int salaNumero = rs.getInt("SalaNumero");
+                String producto = rs.getString("ProductoMasVendido");
+
+                String funcionInfo = String.format("%s (%s, %s, Sala %d)", titulo, fecha, hora, salaNumero);
+                String productoInfo = (producto == null || producto.isEmpty()) ? "Sin ventas de productos" : producto;
+
+                salesTableModel.addRow(new Object[]{funcionInfo, productoInfo});
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(dialog, "Error al obtener las ventas por función: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(dialog, "Error al obtener el resumen de ventas: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            dialog.dispose();
             return;
         }
 
         if (salesTableModel.getRowCount() == 0) {
-            JLabel noSalesLabel = new JLabel("No hay ningún producto vendido de '" + productName + "' que se haya comprado junto a un boleto para alguna función.", SwingConstants.CENTER);
+            JLabel noSalesLabel = new JLabel("No hay datos de funciones para mostrar.", SwingConstants.CENTER);
             noSalesLabel.setForeground(M6.TEXT_COLOR);
             dialog.add(noSalesLabel);
         } else {

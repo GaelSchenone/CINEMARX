@@ -33,7 +33,7 @@ public class Salas {
         tablePanel.setBackground(M6.BACKGROUND_COLOR);
         tablePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        String[] columnNames = {"ID Sala", "Número", "Tipo de Sala", "Butacas"};
+        String[] columnNames = {"ID Sala", "Número", "Tipo de Sala", "Butacas", "Cine"};
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -70,7 +70,7 @@ public class Salas {
 
         bajaBtn.addActionListener(e -> {
             int selectedRow = table.getSelectedRow();
-            if (selectedRow == -1) {
+            if (selectedRow <= 0) { // Se ajusta por el header falso
                 JOptionPane.showMessageDialog(mainFrame, "Seleccione una sala para dar de baja", "Advertencia", JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -98,7 +98,7 @@ public class Salas {
 
         modificacionBtn.addActionListener(e -> {
             int selectedRow = table.getSelectedRow();
-            if (selectedRow == -1) {
+            if (selectedRow <= 0) { // Se ajusta por el header falso
                 JOptionPane.showMessageDialog(mainFrame, "Seleccione una sala para modificar", "Advertencia", JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -122,10 +122,13 @@ public class Salas {
 
     private void cargarSalas(DefaultTableModel tableModel) {
         tableModel.setRowCount(0);
-        Object[] headerRow = {"ID Sala", "Número", "Tipo de Sala", "Butacas"};
+        Object[] headerRow = {"ID Sala", "Número", "Tipo de Sala", "Butacas", "Cine"};
         tableModel.addRow(headerRow);
         try {
-            String query = "SELECT ID_Sala, Numero, TipoDeSala, CantButacas FROM Sala WHERE ID_Cine = 1 ORDER BY Numero";
+            String query = "SELECT s.ID_Sala, s.Numero, s.TipoDeSala, s.CantButacas, c.Nombre AS CineNombre " +
+                           "FROM Sala s " +
+                           "JOIN Cine c ON s.ID_Cine = c.ID_Cine " +
+                           "ORDER BY c.Nombre, s.Numero";
             try (Statement stmt = mainFrame.getConnection().createStatement();
                  ResultSet rs = stmt.executeQuery(query)) {
                 while (rs.next()) {
@@ -133,7 +136,8 @@ public class Salas {
                         rs.getInt("ID_Sala"),
                         rs.getInt("Numero"),
                         rs.getString("TipoDeSala"),
-                        rs.getInt("CantButacas")
+                        rs.getInt("CantButacas"),
+                        rs.getString("CineNombre")
                     };
                     tableModel.addRow(row);
                 }

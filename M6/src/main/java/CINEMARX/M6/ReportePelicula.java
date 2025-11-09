@@ -51,12 +51,14 @@ public class ReportePelicula extends JDialog {
                 viabilidadPanel.add(recaudadoLabel);
 
                 String rentabilidad;
-                if (totalRecaudado > 40000) {
+                if (totalRecaudado > 60000) {
                     rentabilidad = "Muy rentable";
-                } else if (totalRecaudado > 20000) {
+                } else if (totalRecaudado > 30000) {
                     rentabilidad = "Rentable";
+                } else if (totalRecaudado >= 15000) {
+                    rentabilidad = "Poco rentable";
                 } else {
-                    rentabilidad = "No rentable";
+                    rentabilidad = "Nada rentable";
                 }
                 JLabel rentabilidadLabel = new JLabel("Estado: " + rentabilidad);
                 viabilidadPanel.add(rentabilidadLabel);

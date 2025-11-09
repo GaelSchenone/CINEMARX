@@ -9,16 +9,23 @@ import java.sql.*;
 public class DatabaseHelper {
     
     public static void cargarSalas(M6 mainFrame, JComboBox<SalaItem> comboBox) {
+        comboBox.removeAllItems();
+        String query = "SELECT s.ID_Sala, s.Numero, s.TipoDeSala, s.CantButacas, c.Nombre AS CineNombre " +
+                       "FROM Sala s " +
+                       "JOIN Cine c ON s.ID_Cine = c.ID_Cine " +
+                       "ORDER BY c.Nombre, s.Numero";
+        
         try (Statement stmt = mainFrame.getConnection().createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT ID_Sala, Numero, TipoDeSala, CantButacas FROM Sala ORDER BY ID_Sala")) {
+             ResultSet rs = stmt.executeQuery(query)) {
             
             while (rs.next()) {
                 int idSala = rs.getInt("ID_Sala");
                 int numero = rs.getInt("Numero");
                 String tipo = rs.getString("TipoDeSala");
                 int cantButacas = rs.getInt("CantButacas");
+                String cineNombre = rs.getString("CineNombre");
                 
-                comboBox.addItem(new SalaItem(idSala, numero, tipo, cantButacas));
+                comboBox.addItem(new SalaItem(idSala, numero, tipo, cantButacas, cineNombre));
             }
             
         } catch (SQLException e) {
@@ -117,5 +124,33 @@ public class DatabaseHelper {
             }
         }
         return false;
+    }
+    
+    public static ResultSet getResumenVentasProductosPorFuncion(Connection connection) throws SQLException {
+        String query = "SELECT " +
+                       "    f.ID_Funcion, " +
+                       "    p.Titulo, " +
+                       "    f.FechaFuncion, " +
+                       "    f.HoraFuncion, " +
+                       "    s.Numero AS SalaNumero, " +
+                       "    ( " +
+                       "        SELECT prod.Nombre " +
+                       "        FROM Comprobante_Producto cp " +
+                       "        JOIN Producto prod ON cp.ID_Prod = prod.ID_Prod " +
+                       "        JOIN Comprobante c ON cp.ID_Comprobante = c.ID_Comprobante " +
+                       "        JOIN Comprobante_Boleto cb ON c.ID_Comprobante = cb.ID_Comprobante " +
+                       "        JOIN Boleto b ON cb.ID_Boleto = b.ID_Boleto " +
+                       "        WHERE b.ID_Funcion = f.ID_Funcion " +
+                       "        GROUP BY prod.Nombre " +
+                       "        ORDER BY SUM(cp.Cantidad) DESC " +
+                       "        LIMIT 1 " +
+                       "    ) AS ProductoMasVendido " +
+                       "FROM Funcion f " +
+                       "JOIN Pelicula p ON f.ID_Pelicula = p.ID_Pelicula " +
+                       "JOIN Sala s ON f.ID_Sala = s.ID_Sala " +
+                       "ORDER BY f.FechaFuncion DESC, f.HoraFuncion DESC";
+
+        Statement stmt = connection.createStatement();
+        return stmt.executeQuery(query);
     }
 }

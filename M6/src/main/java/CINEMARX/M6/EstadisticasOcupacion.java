@@ -51,7 +51,7 @@ public class EstadisticasOcupacion {
 
         JComboBox<SalaItem> salaComboBox = new JComboBox<>();
         salaComboBox.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        salaComboBox.setPreferredSize(new Dimension(250, 35));
+        salaComboBox.setPreferredSize(new Dimension(350, 35));
         salaComboBox.setBackground(M6.BUTTON_COLOR); // Styled
         salaComboBox.setForeground(M6.TEXT_COLOR); // Styled
         salaComboBox.setRenderer(new DefaultListCellRenderer() { // Styled
@@ -143,9 +143,35 @@ public class EstadisticasOcupacion {
         salaComboBox.addActionListener(e -> {
             SalaItem salaSeleccionada = (SalaItem) salaComboBox.getSelectedItem();
             if (salaSeleccionada != null) {
-                cargarEstadisticasSala(salaSeleccionada.getId(), tableModel, graficoPanel);
+                cargarEstadisticasSala(salaSeleccionada.getId(), tableModel);
+                graficoPanel.removeAll(); // Limpiar gráfico al cambiar de sala
+                graficoPanel.revalidate();
+                graficoPanel.repaint();
             }
         });
+
+        // Listener de la tabla para el gráfico
+        tabla.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting() && tabla.getSelectedRow() != -1) {
+                int selectedRow = tabla.getSelectedRow();
+                // Evitar el header si se hace click
+                if (selectedRow == 0 && tableModel.getValueAt(0, 0).equals("ID Función")) {
+                    return;
+                }
+                
+                try {
+                    int butacasOcupadas = Integer.parseInt(tableModel.getValueAt(selectedRow, 4).toString());
+                    int totalButacas = Integer.parseInt(tableModel.getValueAt(selectedRow, 5).toString());
+                    String pelicula = tableModel.getValueAt(selectedRow, 1).toString();
+                    String fecha = tableModel.getValueAt(selectedRow, 2).toString();
+
+                    crearGraficoOcupacion(graficoPanel, butacasOcupadas, totalButacas, pelicula, fecha);
+                } catch (NumberFormatException ex) {
+                    // No hacer nada si la fila no contiene números válidos (ej. "No hay funciones")
+                }
+            }
+        });
+
         // --- Integración en el panel principal de la interfaz ---
         contentPanel.removeAll();
         contentPanel.setLayout(new BorderLayout());
@@ -156,7 +182,10 @@ public class EstadisticasOcupacion {
 
     private void cargarSalas(JComboBox<SalaItem> comboBox) {
         comboBox.removeAllItems();
-        String query = "SELECT ID_Sala, Numero, TipoDeSala, CantButacas FROM Sala ORDER BY ID_Sala";
+        String query = "SELECT s.ID_Sala, s.Numero, s.TipoDeSala, s.CantButacas, c.Nombre AS CineNombre " +
+                       "FROM Sala s " +
+                       "JOIN Cine c ON s.ID_Cine = c.ID_Cine " +
+                       "ORDER BY c.Nombre, s.Numero";
 
         try (PreparedStatement pstmt = mainFrame.getConnection().prepareStatement(query);
              ResultSet rs = pstmt.executeQuery()) {
@@ -165,7 +194,8 @@ public class EstadisticasOcupacion {
                 String tipo = rs.getString("TipoDeSala");
                 int butacas = rs.getInt("CantButacas");
                 int numero = rs.getInt("Numero");
-                comboBox.addItem(new SalaItem(id, numero, tipo, butacas));
+                String cineNombre = rs.getString("CineNombre");
+                comboBox.addItem(new SalaItem(id, numero, tipo, butacas, cineNombre));
             }
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(mainFrame, "Error al cargar salas: " + e.getMessage(),
@@ -173,7 +203,7 @@ public class EstadisticasOcupacion {
         }
     }
 
-    private void cargarEstadisticasSala(int idSala, DefaultTableModel tableModel, JPanel graficoPanel) {
+    private void cargarEstadisticasSala(int idSala, DefaultTableModel tableModel) {
         tableModel.setRowCount(0);
         tableModel.addRow(COLUMN_NAMES); // Add column names as the first row
         
@@ -186,9 +216,6 @@ public class EstadisticasOcupacion {
                        "WHERE f.ID_Sala = ? " +
                        "GROUP BY f.ID_Funcion, p.Titulo, f.FechaFuncion, f.HoraFuncion, s.CantButacas " +
                        "ORDER BY f.FechaFuncion DESC, f.HoraFuncion DESC";
-
-        int totalButacas = 0;
-        int totalOcupadas = 0;
 
         try (PreparedStatement pstmt = mainFrame.getConnection().prepareStatement(query)) {
             pstmt.setInt(1, idSala);
@@ -204,9 +231,6 @@ public class EstadisticasOcupacion {
 
                 Object[] row = {idFuncion, titulo, fecha, hora, butacasOcupadas, cantButacas};
                 tableModel.addRow(row);
-
-                totalButacas += cantButacas;
-                totalOcupadas += butacasOcupadas;
             }
 
             if (tableModel.getRowCount() == 1) { // Only the header row exists
@@ -221,26 +245,31 @@ public class EstadisticasOcupacion {
                 JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
         }
+    }
 
-        // --- Gráfico de torta ---
+    private void crearGraficoOcupacion(JPanel graficoPanel, int butacasOcupadas, int totalButacas, String pelicula, String fecha) {
         graficoPanel.removeAll();
 
         if (totalButacas > 0) {
-            double porcentajeOcupado = (totalOcupadas * 100.0 / totalButacas);
+            double porcentajeOcupado = (butacasOcupadas * 100.0 / totalButacas);
             double porcentajeLibre = 100.0 - porcentajeOcupado;
 
             DefaultPieDataset dataset = new DefaultPieDataset();
-            dataset.setValue("Ocupadas (" + (int) porcentajeOcupado + "%)", totalOcupadas);
-            dataset.setValue("Libres (" + (int) porcentajeLibre + "%)", totalButacas - totalOcupadas);
+            dataset.setValue("Ocupadas (" + String.format("%.1f", porcentajeOcupado) + "%)", butacasOcupadas);
+            dataset.setValue("Libres (" + String.format("%.1f", porcentajeLibre) + "%)", totalButacas - butacasOcupadas);
 
             JFreeChart chart = ChartFactory.createPieChart(
-                    "Ocupación Total de la Sala", dataset, true, true, false);
+                    "Ocupación de Función: " + pelicula + " - " + fecha, dataset, true, true, false);
 
             PiePlot plot = (PiePlot) chart.getPlot();
-            plot.setSectionPaint("Ocupadas (" + (int) porcentajeOcupado + "%)", new Color(100, 180, 255));
-            plot.setSectionPaint("Libres (" + (int) porcentajeLibre + "%)", new Color(220, 220, 220));
+            plot.setSectionPaint("Ocupadas (" + String.format("%.1f", porcentajeOcupado) + "%)", new Color(100, 180, 255));
+            plot.setSectionPaint("Libres (" + String.format("%.1f", porcentajeLibre) + "%)", new Color(220, 220, 220));
             plot.setLabelFont(new Font("Segoe UI", Font.PLAIN, 12));
             plot.setBackgroundPaint(M6.BACKGROUND_COLOR);
+            chart.getTitle().setPaint(M6.TEXT_COLOR);
+            chart.getLegend().setBackgroundPaint(M6.BACKGROUND_COLOR);
+            chart.getLegend().setItemPaint(M6.TEXT_COLOR);
+
 
             ChartPanel chartPanel = new ChartPanel(chart);
             chartPanel.setPreferredSize(new Dimension(500, 300));
