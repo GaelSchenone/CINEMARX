@@ -2,6 +2,8 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
+
+
 package CINEMARX.M2;
 
 import java.sql.*;
@@ -14,14 +16,11 @@ import java.util.List;
  */
 public class PeliculaDAO {
     
-    // (INSERT, UPDATE, DELETE no cambian... omitidos por brevedad)
-    // ...
     // ==========================================
     // CREAR (INSERT)
     // ==========================================
     
     public boolean insertar(Pelicula pelicula) {
-        // --- MODIFICADO: Añadir Sinopsis al insertar ---
         String sql = "INSERT INTO Pelicula (Genero, Titulo, ClasificacionEdad, Estado, Imagen, Sinopsis) " +
                      "VALUES (?, ?, ?, ?, ?, ?)";
         
@@ -33,7 +32,7 @@ public class PeliculaDAO {
             pstmt.setString(3, pelicula.getClasificacionEdad());
             pstmt.setString(4, pelicula.getEstado());
             pstmt.setString(5, pelicula.getImagen());
-            pstmt.setString(6, pelicula.getSinopsis()); // Añadido
+            pstmt.setString(6, pelicula.getSinopsis());
             
             int filasAfectadas = pstmt.executeUpdate();
             
@@ -59,13 +58,8 @@ public class PeliculaDAO {
     // LEER (SELECT)
     // ==========================================
     
-    /**
-     * Obtiene todas las películas de la base de datos
-     * @return Lista de películas
-     */
     public List<Pelicula> obtenerTodas() {
         List<Pelicula> peliculas = new ArrayList<>();
-        // --- MODIFICADO: Añadir Sinopsis ---
         String sql = "SELECT ID_Pelicula, Genero, Titulo, ClasificacionEdad, Estado, Imagen, Sinopsis " +
                      "FROM Pelicula ORDER BY Titulo";
         
@@ -74,7 +68,6 @@ public class PeliculaDAO {
              ResultSet rs = stmt.executeQuery(sql)) {
             
             while (rs.next()) {
-                // --- MODIFICADO: Usar nuevo constructor ---
                 Pelicula pelicula = new Pelicula(
                     rs.getInt("ID_Pelicula"),
                     rs.getString("Titulo"),
@@ -82,7 +75,7 @@ public class PeliculaDAO {
                     rs.getString("ClasificacionEdad"),
                     rs.getString("Estado"),
                     rs.getString("Imagen"),
-                    rs.getString("Sinopsis") // Añadido
+                    rs.getString("Sinopsis")
                 );
                 peliculas.add(pelicula);
             }
@@ -92,13 +85,7 @@ public class PeliculaDAO {
         return peliculas;
     }
     
-    /**
-     * Obtiene una película por su ID
-     * @param idPelicula ID de la película
-     * @return Objeto Pelicula o null si no existe
-     */
     public Pelicula obtenerPorId(int idPelicula) {
-        // --- MODIFICADO: Añadir Sinopsis ---
         String sql = "SELECT ID_Pelicula, Genero, Titulo, ClasificacionEdad, Estado, Imagen, Sinopsis " +
                      "FROM Pelicula WHERE ID_Pelicula = ?";
         
@@ -109,7 +96,6 @@ public class PeliculaDAO {
             
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    // --- MODIFICADO: Usar nuevo constructor ---
                     return new Pelicula(
                         rs.getInt("ID_Pelicula"),
                         rs.getString("Titulo"),
@@ -117,7 +103,7 @@ public class PeliculaDAO {
                         rs.getString("ClasificacionEdad"),
                         rs.getString("Estado"),
                         rs.getString("Imagen"),
-                        rs.getString("Sinopsis") // Añadido
+                        rs.getString("Sinopsis")
                     );
                 }
             }
@@ -127,14 +113,8 @@ public class PeliculaDAO {
         return null;
     }
     
-    /**
-     * Busca películas por título (búsqueda parcial)
-     * @param termino Término de búsqueda
-     * @return Lista de películas que contienen el término en el título
-     */
     public List<Pelicula> buscarPorTitulo(String termino) {
         List<Pelicula> peliculas = new ArrayList<>();
-        // --- MODIFICADO: Añadir Sinopsis ---
         String sql = "SELECT ID_Pelicula, Genero, Titulo, ClasificacionEdad, Estado, Imagen, Sinopsis " +
                      "FROM Pelicula WHERE Titulo LIKE ? ORDER BY Titulo";
         
@@ -145,7 +125,6 @@ public class PeliculaDAO {
             
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    // --- MODIFICADO: Usar nuevo constructor ---
                     Pelicula pelicula = new Pelicula(
                         rs.getInt("ID_Pelicula"),
                         rs.getString("Titulo"),
@@ -153,7 +132,7 @@ public class PeliculaDAO {
                         rs.getString("ClasificacionEdad"),
                         rs.getString("Estado"),
                         rs.getString("Imagen"),
-                        rs.getString("Sinopsis") // Añadido
+                        rs.getString("Sinopsis")
                     );
                     peliculas.add(pelicula);
                 }
@@ -169,7 +148,6 @@ public class PeliculaDAO {
     // ==========================================
     
     public boolean actualizar(Pelicula pelicula) {
-        // --- MODIFICADO: Añadir Sinopsis ---
         String sql = "UPDATE Pelicula SET Genero = ?, Titulo = ?, ClasificacionEdad = ?, " +
                      "Estado = ?, Imagen = ?, Sinopsis = ? WHERE ID_Pelicula = ?";
         
@@ -181,7 +159,7 @@ public class PeliculaDAO {
             pstmt.setString(3, pelicula.getClasificacionEdad());
             pstmt.setString(4, pelicula.getEstado());
             pstmt.setString(5, pelicula.getImagen());
-            pstmt.setString(6, pelicula.getSinopsis()); // Añadido
+            pstmt.setString(6, pelicula.getSinopsis());
             pstmt.setInt(7, pelicula.getIdPelicula());
             
             int filasAfectadas = pstmt.executeUpdate();
@@ -193,11 +171,10 @@ public class PeliculaDAO {
         return false;
     }
     
-    // (ELIMINAR y otros métodos auxiliares no cambian...)
-    // ...
     // ==========================================
     // ELIMINAR (DELETE)
     // ==========================================
+    
     public boolean eliminar(int idPelicula) {
         String sql = "DELETE FROM Pelicula WHERE ID_Pelicula = ?";
         try (Connection conn = M2.obtenerConexion();
@@ -212,12 +189,11 @@ public class PeliculaDAO {
     }
     
     // ==========================================
-    // MÉTODO PARA SECCIONES
+    // MÉTODOS AUXILIARES
     // ==========================================
     
     public List<Pelicula> obtenerPeliculasConFiltro(String genero, String estado, int limit) {
         List<Pelicula> peliculas = new ArrayList<>();
-        // --- MODIFICADO: Añadir Sinopsis ---
         StringBuilder sql = new StringBuilder(
             "SELECT ID_Pelicula, Genero, Titulo, ClasificacionEdad, Estado, Imagen, Sinopsis FROM Pelicula WHERE 1=1"
         );
@@ -237,7 +213,6 @@ public class PeliculaDAO {
             
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    // --- MODIFICADO: Usar nuevo constructor ---
                     Pelicula pelicula = new Pelicula(
                         rs.getInt("ID_Pelicula"),
                         rs.getString("Titulo"),
@@ -245,7 +220,7 @@ public class PeliculaDAO {
                         rs.getString("ClasificacionEdad"),
                         rs.getString("Estado"),
                         rs.getString("Imagen"),
-                        rs.getString("Sinopsis") // Añadido
+                        rs.getString("Sinopsis")
                     );
                     peliculas.add(pelicula);
                 }
@@ -256,12 +231,7 @@ public class PeliculaDAO {
         return peliculas;
     }
 
-    // ==========================================
-    // MÉTODO PARA SUGERENCIAS
-    // ==========================================
-    
     public List<String> obtenerTitulosQueCoinciden(String termino, int limit) {
-        // (Este método no necesita cambios, solo busca títulos)
         List<String> titulos = new ArrayList<>();
         String sql = "SELECT Titulo FROM Pelicula WHERE Titulo LIKE ? ORDER BY Titulo LIMIT ?";
         
@@ -280,13 +250,8 @@ public class PeliculaDAO {
         return titulos;
     }
 
-    // ==========================================
-    // MÉTODO "MÁS TAQUILLERAS"
-    // ==========================================
-    
     public List<Pelicula> obtenerPeliculasMasTaquilleras(int limit) {
         List<Pelicula> peliculas = new ArrayList<>();
-        // --- MODIFICADO: Añadir Sinopsis ---
         String sql = "SELECT p.ID_Pelicula, p.Genero, p.Titulo, p.ClasificacionEdad, p.Estado, p.Imagen, p.Sinopsis, SUM(cb.Cantidad) AS TotalVentas "
                    + "FROM Pelicula p "
                    + "JOIN Funcion f ON p.ID_Pelicula = f.ID_Pelicula "
@@ -303,7 +268,6 @@ public class PeliculaDAO {
             
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    // --- MODIFICADO: Usar nuevo constructor ---
                     Pelicula pelicula = new Pelicula(
                         rs.getInt("ID_Pelicula"),
                         rs.getString("Titulo"),
@@ -311,7 +275,7 @@ public class PeliculaDAO {
                         rs.getString("ClasificacionEdad"),
                         rs.getString("Estado"),
                         rs.getString("Imagen"),
-                        rs.getString("Sinopsis") // Añadido
+                        rs.getString("Sinopsis")
                     );
                     peliculas.add(pelicula);
                 }
@@ -322,16 +286,7 @@ public class PeliculaDAO {
         return peliculas;
     }
     
-    // ==========================================
-    // *** NUEVO MÉTODO PARA "SPOTLIGHT" ***
-    // ==========================================
-    
-    /**
-     * Obtiene una única película aleatoria que esté "En Cartelera".
-     * @return Un objeto Pelicula, o null si no se encuentra ninguna.
-     */
     public Pelicula obtenerPeliculaAleatoriaEnCartelera() {
-        // --- MODIFICADO: Añadir Sinopsis y usar RAND() ---
         String sql = "SELECT ID_Pelicula, Genero, Titulo, ClasificacionEdad, Estado, Imagen, Sinopsis " +
                      "FROM Pelicula WHERE Estado = 'En Cartelera' ORDER BY RAND() LIMIT 1";
         
@@ -340,7 +295,6 @@ public class PeliculaDAO {
             
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    // --- MODIFICADO: Usar nuevo constructor ---
                     return new Pelicula(
                         rs.getInt("ID_Pelicula"),
                         rs.getString("Titulo"),
@@ -348,16 +302,65 @@ public class PeliculaDAO {
                         rs.getString("ClasificacionEdad"),
                         rs.getString("Estado"),
                         rs.getString("Imagen"),
-                        rs.getString("Sinopsis") // Añadido
+                        rs.getString("Sinopsis")
                     );
                 }
             }
         } catch (SQLException e) {
             System.err.println("❌ Error al obtener película aleatoria: " + e.getMessage());
         }
-        return null; // Retorna null si no hay películas "En Cartelera"
+        return null;
     }
-
-    // (El método main() de prueba no necesita cambios)
-    // ...
+    
+    // ==========================================
+    // NUEVOS MÉTODOS PARA FILTROS DINÁMICOS
+    // ==========================================
+    
+    /**
+     * Obtiene todos los géneros únicos de la BD
+     */
+    public List<String> obtenerGenerosUnicos() {
+        List<String> generos = new ArrayList<>();
+        String sql = "SELECT DISTINCT Genero FROM Pelicula WHERE Genero IS NOT NULL ORDER BY Genero";
+        
+        try (Connection conn = M2.obtenerConexion();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            
+            while (rs.next()) {
+                String genero = rs.getString("Genero");
+                if (genero != null && !genero.trim().isEmpty()) {
+                    generos.add(genero);
+                }
+            }
+            System.out.println("✅ Géneros únicos obtenidos: " + generos.size());
+        } catch (SQLException e) {
+            System.err.println("❌ Error al obtener géneros únicos: " + e.getMessage());
+        }
+        return generos;
+    }
+    
+    /**
+     * Obtiene todas las clasificaciones únicas de la BD
+     */
+    public List<String> obtenerClasificacionesUnicas() {
+        List<String> clasificaciones = new ArrayList<>();
+        String sql = "SELECT DISTINCT ClasificacionEdad FROM Pelicula WHERE ClasificacionEdad IS NOT NULL ORDER BY ClasificacionEdad";
+        
+        try (Connection conn = M2.obtenerConexion();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            
+            while (rs.next()) {
+                String clasif = rs.getString("ClasificacionEdad");
+                if (clasif != null && !clasif.trim().isEmpty()) {
+                    clasificaciones.add(clasif);
+                }
+            }
+            System.out.println("✅ Clasificaciones únicas obtenidas: " + clasificaciones.size());
+        } catch (SQLException e) {
+            System.err.println("❌ Error al obtener clasificaciones únicas: " + e.getMessage());
+        }
+        return clasificaciones;
+    }
 }

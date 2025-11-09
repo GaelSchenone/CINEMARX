@@ -2,6 +2,8 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
+//hola
+
 package CINEMARX.M2;
 
 import javax.swing.*;
@@ -10,28 +12,17 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
-// Imports de Modelo y DAO
-import CINEMARX.M2.Pelicula;
-import CINEMARX.M2.PeliculaDAO;
-
-// Imports para imágenes
 import javax.imageio.ImageIO;
 import java.net.URL;
-import javax.swing.ImageIcon;
-import java.awt.Image;
 import java.io.IOException;
 
-// Imports para CardLayout, Sugerencias y Eventos
-import javax.swing.BoxLayout;
-import javax.swing.JScrollPane;
-import javax.swing.JPopupMenu;
-import javax.swing.JMenuItem;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-// --- IMPORTANTE: Importar tu clase de Estilos ---
-import CINEMARX.M2.CinemarXEstilos;
 
+import CINEMARX.M2.CinemarXEstilos;
 
 public class CatalogoPeliculasFrame extends JFrame {
     
@@ -40,40 +31,38 @@ public class CatalogoPeliculasFrame extends JFrame {
     private JButton btnLimpiarBusqueda;
     private JPopupMenu sugerenciasPopup;
     private boolean actualizandoPorSugerencia = false;
+    private JComboBox<String> cmbGenero, cmbClasificacion;
     
     // Componentes de Layout
     private CardLayout cardLayout;
-    private JPanel panelContenedor; // Panel principal con CardLayout
-    private JPanel panelPeliculasSecciones; // Panel vertical para las filas
-    private JPanel panelResultadosBusqueda; // Panel grid para resultados
+    private JPanel panelContenedor;
+    private JPanel panelPeliculasSecciones;
+    private JPanel panelResultadosBusqueda;
     
     // Componentes para "SPOTLIGHT"
     private JPanel panelSpotlight;
-    private JLabel lblSpotlightImagen; // Para el póster
-    private JLabel lblSpotlightTitulo; // Para el título grande
-    private JTextArea txtSpotlightSinopsis; // Para la sinopsis
-    private Pelicula peliculaDestacada; // Para guardar la película
+    private JLabel lblSpotlightImagen;
+    private JLabel lblSpotlightTitulo;
+    private JTextArea txtSpotlightSinopsis;
+    private Pelicula peliculaDestacada;
 
     // Conexión a la BD
-    private PeliculaDAO peliculaDAO; 
-    
+    private PeliculaDAO peliculaDAO;
     
     public CatalogoPeliculasFrame() {
         inicializarDatos();
         configurarVentana();
-        crearComponentes(); // Esto crea la UI base
+        crearComponentes();
         
-        // Cargamos las secciones después de que la ventana es visible
         SwingUtilities.invokeLater(() -> {
-            cargarSpotlight(); // Cargar la película destacada
-            cargarSecciones(); // Cargar las filas
+            cargarSpotlight();
+            cargarSecciones();
         });
     }
     
     private void inicializarDatos() {
         this.peliculaDAO = new PeliculaDAO();
         this.sugerenciasPopup = new JPopupMenu();
-        // USANDO CINEMARXESTILOS:
         this.sugerenciasPopup.setBackground(CinemarXEstilos.COLOR_CARD);
         this.sugerenciasPopup.setBorder(BorderFactory.createLineBorder(CinemarXEstilos.COLOR_BORDER));
     }
@@ -84,7 +73,6 @@ public class CatalogoPeliculasFrame extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
-        // USANDO CINEMARXESTILOS:
         getContentPane().setBackground(CinemarXEstilos.COLOR_FONDO);
     }
     
@@ -94,7 +82,6 @@ public class CatalogoPeliculasFrame extends JFrame {
     }
 
     private JPanel crearHeader() {
-        // USANDO CINEMARXESTILOS:
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(CinemarXEstilos.COLOR_HEADER);
         header.setBorder(new EmptyBorder(15, 30, 15, 30));
@@ -145,27 +132,21 @@ public class CatalogoPeliculasFrame extends JFrame {
     }
     
     private JPanel crearPanelCentral() {
-        // USANDO CINEMARXESTILOS:
         JPanel panel = new JPanel(new BorderLayout(0, 15));
         panel.setBackground(CinemarXEstilos.COLOR_FONDO);
         panel.setBorder(new EmptyBorder(20, 30, 20, 30));
 
-        // 1. Panel de Búsqueda (Arriba)
         panel.add(crearPanelBusqueda(), BorderLayout.NORTH);
         
-        // 2. Panel de Contenido Principal (Centro)
         JPanel panelContenidoPrincipal = new JPanel(new BorderLayout(0, 15));
         panelContenidoPrincipal.setBackground(CinemarXEstilos.COLOR_FONDO);
 
-        // 2a. Añadir el nuevo Panel Spotlight
         panelContenidoPrincipal.add(crearPanelSpotlight(), BorderLayout.NORTH);
         
-        // 2b. Añadir el CardLayout (como estaba antes)
         cardLayout = new CardLayout();
         panelContenedor = new JPanel(cardLayout);
         panelContenedor.setBackground(CinemarXEstilos.COLOR_FONDO);
 
-        // Panel 1: "SECCIONES"
         panelPeliculasSecciones = new JPanel();
         panelPeliculasSecciones.setLayout(new BoxLayout(panelPeliculasSecciones, BoxLayout.Y_AXIS));
         panelPeliculasSecciones.setBackground(CinemarXEstilos.COLOR_FONDO);
@@ -175,7 +156,6 @@ public class CatalogoPeliculasFrame extends JFrame {
         scrollSecciones.getVerticalScrollBar().setUnitIncrement(16);
         scrollSecciones.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         
-        // Panel 2: "BUSQUEDA"
         panelResultadosBusqueda = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 20));
         panelResultadosBusqueda.setBackground(CinemarXEstilos.COLOR_FONDO);
         
@@ -183,32 +163,29 @@ public class CatalogoPeliculasFrame extends JFrame {
         scrollBusqueda.setBorder(null);
         scrollBusqueda.getVerticalScrollBar().setUnitIncrement(16);
 
-        // Añadir vistas al CardLayout
         panelContenedor.add(scrollSecciones, "SECCIONES");
         panelContenedor.add(scrollBusqueda, "BUSQUEDA");
         
-        // Añadir el CardLayout al Contenido Principal
         panelContenidoPrincipal.add(panelContenedor, BorderLayout.CENTER);
-        
-        // Añadir el Contenido Principal al panel central
         panel.add(panelContenidoPrincipal, BorderLayout.CENTER);
         
-        // Mostrar "SECCIONES" por defecto
         cardLayout.show(panelContenedor, "SECCIONES");
         
         return panel;
     }
 
     private JPanel crearPanelBusqueda() {
-        // USANDO CINEMARXESTILOS:
+        JPanel panelBusquedaCompleto = new JPanel(new BorderLayout(0, 15));
+        panelBusquedaCompleto.setBackground(CinemarXEstilos.COLOR_FONDO);
+        
+        // FILA 1: Campo de búsqueda
         JPanel panelBusqueda = new JPanel(new BorderLayout(10, 0));
         panelBusqueda.setBackground(CinemarXEstilos.COLOR_FONDO);
         
         txtBusqueda = new JTextField("🔍 Buscar película...");
-        // Esto estaba bien, llama al método de tu clase
         CinemarXEstilos.aplicarEstiloTextField(txtBusqueda);
-        
         txtBusqueda.setForeground(CinemarXEstilos.COLOR_TEXTO_SECUNDARIO);
+        
         txtBusqueda.addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
@@ -228,7 +205,7 @@ public class CatalogoPeliculasFrame extends JFrame {
 
         txtBusqueda.addActionListener(e -> {
             sugerenciasPopup.setVisible(false);
-            ejecutarBusqueda(txtBusqueda.getText());
+            ejecutarBusquedaConFiltros();
         });
         
         txtBusqueda.getDocument().addDocumentListener(new DocumentListener() {
@@ -237,61 +214,78 @@ public class CatalogoPeliculasFrame extends JFrame {
             @Override public void changedUpdate(DocumentEvent e) { manejarSugerencias(); }
         });
         
-        // Botón Limpiar ("X")
-        btnLimpiarBusqueda = new JButton("X");
-        // USANDO CINEMARXESTILOS:
+        btnLimpiarBusqueda = new JButton("✖");
         CinemarXEstilos.aplicarEstiloBoton(btnLimpiarBusqueda, CinemarXEstilos.COLOR_ROJO);
         btnLimpiarBusqueda.setPreferredSize(new Dimension(45, 45));
-        btnLimpiarBusqueda.setVisible(false); // Oculto por defecto
+        btnLimpiarBusqueda.setVisible(false);
         btnLimpiarBusqueda.addActionListener(e -> limpiarBusqueda());
         
         panelBusqueda.add(txtBusqueda, BorderLayout.CENTER);
         panelBusqueda.add(btnLimpiarBusqueda, BorderLayout.EAST);
         
-        return panelBusqueda;
+        // FILA 2: Filtros
+        JPanel panelFiltros = new JPanel(new GridLayout(1, 2, 15, 0));
+        panelFiltros.setBackground(CinemarXEstilos.COLOR_FONDO);
+        
+        List<String> generosDB = peliculaDAO.obtenerGenerosUnicos();
+        List<String> generosConTodos = new ArrayList<>();
+        generosConTodos.add("Todos los géneros");
+        generosConTodos.addAll(generosDB);
+        cmbGenero = new JComboBox<>(generosConTodos.toArray(new String[0]));
+        CinemarXEstilos.aplicarEstiloComboBox(cmbGenero);
+        cmbGenero.setForeground(Color.BLACK);
+        cmbGenero.addActionListener(e -> ejecutarBusquedaConFiltros());
+        
+        List<String> clasificacionesDB = peliculaDAO.obtenerClasificacionesUnicas();
+        List<String> clasificacionesConTodas = new ArrayList<>();
+        clasificacionesConTodas.add("Todas las edades");
+        clasificacionesConTodas.addAll(clasificacionesDB);
+        cmbClasificacion = new JComboBox<>(clasificacionesConTodas.toArray(new String[0]));
+        CinemarXEstilos.aplicarEstiloComboBox(cmbClasificacion);
+        cmbClasificacion.setForeground(Color.BLACK);  
+        cmbClasificacion.addActionListener(e -> ejecutarBusquedaConFiltros());
+        
+        panelFiltros.add(cmbGenero);
+        panelFiltros.add(cmbClasificacion);
+        
+        panelBusquedaCompleto.add(panelBusqueda, BorderLayout.NORTH);
+        panelBusquedaCompleto.add(panelFiltros, BorderLayout.CENTER);
+        
+        return panelBusquedaCompleto;
     }
     
-    // ==========================================
-    // MÉTODOS "SPOTLIGHT" (CORREGIDOS)
-    // ==========================================
-    
     private JPanel crearPanelSpotlight() {
-        // USANDO CINEMARXESTILOS:
         panelSpotlight = new JPanel(new BorderLayout(15, 0));
-        panelSpotlight.setBackground(CinemarXEstilos.COLOR_CARD); // Fondo
+        panelSpotlight.setBackground(CinemarXEstilos.COLOR_CARD);
         panelSpotlight.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(CinemarXEstilos.COLOR_BORDER), // Borde
+            BorderFactory.createLineBorder(CinemarXEstilos.COLOR_BORDER),
             new EmptyBorder(15, 15, 15, 15)
         ));
-        panelSpotlight.setPreferredSize(new Dimension(0, 250)); // Altura fija
+        panelSpotlight.setPreferredSize(new Dimension(0, 250));
         
-        // 1. Panel de Imagen (Oeste)
         lblSpotlightImagen = new JLabel();
         lblSpotlightImagen.setPreferredSize(new Dimension(150, 220));
-        lblSpotlightImagen.setBackground(new Color(60, 60, 60)); // Color específico está bien
+        lblSpotlightImagen.setBackground(new Color(60, 60, 60));
         lblSpotlightImagen.setOpaque(true);
         lblSpotlightImagen.setHorizontalAlignment(SwingConstants.CENTER);
-        lblSpotlightImagen.setForeground(CinemarXEstilos.COLOR_TEXTO_SECUNDARIO); // Texto
+        lblSpotlightImagen.setForeground(CinemarXEstilos.COLOR_TEXTO_SECUNDARIO);
         lblSpotlightImagen.setText("Cargando...");
         panelSpotlight.add(lblSpotlightImagen, BorderLayout.WEST);
         
-        // 2. Panel de Información (Centro)
         JPanel panelInfo = new JPanel(new BorderLayout(0, 10));
         panelInfo.setOpaque(false);
         
-        // 2a. Título
         lblSpotlightTitulo = new JLabel("Cargando película destacada...");
         lblSpotlightTitulo.setFont(new Font("SansSerif", Font.BOLD, 28));
-        lblSpotlightTitulo.setForeground(CinemarXEstilos.COLOR_TEXTO); // Texto
+        lblSpotlightTitulo.setForeground(CinemarXEstilos.COLOR_TEXTO);
         panelInfo.add(lblSpotlightTitulo, BorderLayout.NORTH);
         
-        // 2b. Sinopsis
         txtSpotlightSinopsis = new JTextArea("Cargando sinopsis...");
         txtSpotlightSinopsis.setEditable(false);
         txtSpotlightSinopsis.setLineWrap(true);
         txtSpotlightSinopsis.setWrapStyleWord(true);
         txtSpotlightSinopsis.setOpaque(false);
-        txtSpotlightSinopsis.setForeground(CinemarXEstilos.COLOR_TEXTO_SECUNDARIO); // Texto
+        txtSpotlightSinopsis.setForeground(CinemarXEstilos.COLOR_TEXTO_SECUNDARIO);
         txtSpotlightSinopsis.setFont(new Font("SansSerif", Font.PLAIN, 14));
         txtSpotlightSinopsis.setFocusable(false);
         
@@ -302,14 +296,12 @@ public class CatalogoPeliculasFrame extends JFrame {
         
         panelInfo.add(scrollSinopsis, BorderLayout.CENTER);
         
-        // Botón de Refrescar
         JButton btnRefresh = new JButton("🔄");
         btnRefresh.setFont(new Font("SansSerif", Font.PLAIN, 20));
-        // USANDO CINEMARXESTILOS:
         CinemarXEstilos.aplicarEstiloBoton(btnRefresh, CinemarXEstilos.COLOR_BOTON);
         btnRefresh.setPreferredSize(new Dimension(50, 50));
         btnRefresh.setToolTipText("Mostrar otra película aleatoria");
-        btnRefresh.addActionListener(e -> cargarSpotlight()); // Vuelve a cargar
+        btnRefresh.addActionListener(e -> cargarSpotlight());
         
         panelSpotlight.add(panelInfo, BorderLayout.CENTER);
         panelSpotlight.add(btnRefresh, BorderLayout.EAST);
@@ -318,7 +310,6 @@ public class CatalogoPeliculasFrame extends JFrame {
     }
     
     private void cargarSpotlight() {
-        // (Este método no usa colores)
         lblSpotlightTitulo.setText("Buscando película...");
         txtSpotlightSinopsis.setText("");
         lblSpotlightImagen.setIcon(null);
@@ -336,7 +327,8 @@ public class CatalogoPeliculasFrame extends JFrame {
                     peliculaDestacada = get();
                     if (peliculaDestacada != null) {
                         lblSpotlightTitulo.setText(peliculaDestacada.getTitulo());
-                        txtSpotlightSinopsis.setText(peliculaDestacada.getSinopsis());
+                        String sinopsis = peliculaDestacada.getSinopsis();
+                        txtSpotlightSinopsis.setText(sinopsis != null ? sinopsis : "Sin sinopsis disponible.");
                         cargarImagenSpotlight(peliculaDestacada.getImagen());
                     } else {
                         lblSpotlightTitulo.setText("No hay películas destacadas");
@@ -352,7 +344,6 @@ public class CatalogoPeliculasFrame extends JFrame {
     }
     
     private void cargarImagenSpotlight(String urlImagen) {
-        // (Este método no usa colores)
         final int POSTER_WIDTH = 150;
         final int POSTER_HEIGHT = 220;
         
@@ -390,10 +381,9 @@ public class CatalogoPeliculasFrame extends JFrame {
             lblSpotlightImagen.setText("Sin Imagen");
         }
     }
-
     
     // ==========================================
-    // LÓGICA DE BÚSQUEDA
+    // LÓGICA DE BÚSQUEDA CON FILTROS
     // ==========================================
      
     private void manejarSugerencias() {
@@ -420,7 +410,6 @@ public class CatalogoPeliculasFrame extends JFrame {
                     }
                     for (String titulo : titulos) {
                         JMenuItem item = new JMenuItem(titulo);
-                        // USANDO CINEMARXESTILOS:
                         item.setBackground(CinemarXEstilos.COLOR_CARD);
                         item.setForeground(CinemarXEstilos.COLOR_TEXTO);
                         item.setFont(new Font("SansSerif", Font.PLAIN, 14));
@@ -429,7 +418,7 @@ public class CatalogoPeliculasFrame extends JFrame {
                             actualizandoPorSugerencia = true;
                             txtBusqueda.setText(titulo);
                             sugerenciasPopup.setVisible(false);
-                            ejecutarBusqueda(titulo);
+                            ejecutarBusquedaConFiltros();
                             actualizandoPorSugerencia = false;
                         });
                         sugerenciasPopup.add(item);
@@ -444,17 +433,37 @@ public class CatalogoPeliculasFrame extends JFrame {
         worker.execute();
     }
     
-    private void ejecutarBusqueda(String termino) {
-        if (termino.isEmpty() || termino.equals("🔍 Buscar película...")) {
+    private void ejecutarBusquedaConFiltros() {
+        String termino = txtBusqueda.getText();
+        String genero = (String) cmbGenero.getSelectedItem();
+        String clasificacion = (String) cmbClasificacion.getSelectedItem();
+        
+        // Si todo está en default, volver a secciones
+        if ((termino.isEmpty() || termino.equals("🔍 Buscar película...")) && 
+            genero.equals("Todos los géneros") && 
+            clasificacion.equals("Todas las edades")) {
             limpiarBusqueda();
             return;
         }
-        List<Pelicula> resultados = peliculaDAO.buscarPorTitulo(termino);
+        
+        // Obtener resultados
+        List<Pelicula> resultados;
+        
+        if (!termino.isEmpty() && !termino.equals("🔍 Buscar película...")) {
+            resultados = peliculaDAO.buscarPorTitulo(termino);
+        } else {
+            resultados = peliculaDAO.obtenerTodas();
+        }
+        
+        // Aplicar filtros
+        resultados = filtrarLocalmente(resultados, genero, clasificacion);
+        
+        // Mostrar resultados
         panelResultadosBusqueda.removeAll();
+        
         if (resultados.isEmpty()) {
-            JLabel noResultados = new JLabel("No se encontraron resultados para '" + termino + "'");
+            JLabel noResultados = new JLabel("No se encontraron resultados");
             noResultados.setFont(new Font("SansSerif", Font.BOLD, 18));
-            // USANDO CINEMARXESTILOS:
             noResultados.setForeground(CinemarXEstilos.COLOR_TEXTO_SECUNDARIO);
             panelResultadosBusqueda.add(noResultados);
         } else {
@@ -462,66 +471,91 @@ public class CatalogoPeliculasFrame extends JFrame {
                 panelResultadosBusqueda.add(crearCardPelicula(peli));
             }
         }
+        
         panelResultadosBusqueda.revalidate();
         panelResultadosBusqueda.repaint();
         btnLimpiarBusqueda.setVisible(true);
         cardLayout.show(panelContenedor, "BUSQUEDA");
     }
     
+    private List<Pelicula> filtrarLocalmente(List<Pelicula> peliculas, String genero, String clasificacion) {
+        List<Pelicula> filtradas = new ArrayList<>();
+        
+        for (Pelicula peli : peliculas) {
+            boolean cumpleGenero = genero.equals("Todos los géneros") || peli.getGenero().equals(genero);
+            boolean cumpleClasificacion = clasificacion.equals("Todas las edades") || peli.getClasificacionEdad().equals(clasificacion);
+            
+            if (cumpleGenero && cumpleClasificacion) {
+                filtradas.add(peli);
+            }
+        }
+        
+        return filtradas;
+    }
+    
     private void limpiarBusqueda() {
         txtBusqueda.setText("🔍 Buscar película...");
-        // USANDO CINEMARXESTILOS:
         txtBusqueda.setForeground(CinemarXEstilos.COLOR_TEXTO_SECUNDARIO);
+        cmbGenero.setSelectedIndex(0);
+        cmbClasificacion.setSelectedIndex(0);
         btnLimpiarBusqueda.setVisible(false);
         sugerenciasPopup.setVisible(false);
         cardLayout.show(panelContenedor, "SECCIONES");
     }
-
     
     // ==========================================
-    // LÓGICA DE SECCIONES
+    // LÓGICA DE SECCIONES (CON GÉNEROS DINÁMICOS)
     // ==========================================
     
     private void cargarSecciones() {
-        // (Sin cambios, ya estaba bien)
         panelPeliculasSecciones.removeAll();
         panelPeliculasSecciones.add(Box.createRigidArea(new Dimension(0, 10)));
         int LIMITE_POR_FILA = 10;
         
+        // 1. Más taquilleras
         List<Pelicula> masTaquilleras = peliculaDAO.obtenerPeliculasMasTaquilleras(LIMITE_POR_FILA);
         if (!masTaquilleras.isEmpty()) {
             panelPeliculasSecciones.add(crearFilaSeccion("🏆 Películas más taquilleras", masTaquilleras));
             panelPeliculasSecciones.add(Box.createRigidArea(new Dimension(0, 30)));
         }
 
+        // 2. En Cartelera
         List<Pelicula> enCartelera = peliculaDAO.obtenerPeliculasConFiltro(null, "En Cartelera", LIMITE_POR_FILA);
         if (!enCartelera.isEmpty()) {
             panelPeliculasSecciones.add(crearFilaSeccion("🎬 En Cartelera", enCartelera));
             panelPeliculasSecciones.add(Box.createRigidArea(new Dimension(0, 30)));
         }
         
+        // 3. Próximamente
         List<Pelicula> proximamente = peliculaDAO.obtenerPeliculasConFiltro(null, "Próximamente", LIMITE_POR_FILA);
         if (!proximamente.isEmpty()) {
             panelPeliculasSecciones.add(crearFilaSeccion("🍿 Próximamente", proximamente));
             panelPeliculasSecciones.add(Box.createRigidArea(new Dimension(0, 30)));
         }
         
-        List<Pelicula> accion = peliculaDAO.obtenerPeliculasConFiltro("Acción", "En Cartelera", LIMITE_POR_FILA);
-        if (!accion.isEmpty()) {
-            panelPeliculasSecciones.add(crearFilaSeccion("💥 Acción", accion));
-            panelPeliculasSecciones.add(Box.createRigidArea(new Dimension(0, 30)));
-        }
+        // 4. SECCIONES POR GÉNERO (DINÁMICAS)
+        List<String> generosDB = peliculaDAO.obtenerGenerosUnicos();
         
-        List<Pelicula> terror = peliculaDAO.obtenerPeliculasConFiltro("Terror", "En Cartelera", LIMITE_POR_FILA);
-        if (!terror.isEmpty()) {
-            panelPeliculasSecciones.add(crearFilaSeccion("👻 Terror", terror));
-            panelPeliculasSecciones.add(Box.createRigidArea(new Dimension(0, 30)));
-        }
+        // Emojis por género
+        Map<String, String> emojis = new HashMap<>();
+        emojis.put("Acción", "💥");
+        emojis.put("Terror", "👻");
+        emojis.put("Comedia", "😂");
+        emojis.put("Drama", "🎭");
+        emojis.put("Ciencia Ficción", "🚀");
+        emojis.put("Animación", "🎨");
+        emojis.put("Romance", "💕");
+        emojis.put("Superhéroes", "🦸");
+        emojis.put("Aventura", "🗺️");
+        emojis.put("Documental", "📹");
         
-        List<Pelicula> comedia = peliculaDAO.obtenerPeliculasConFiltro("Comedia", "En Cartelera", LIMITE_POR_FILA);
-        if (!comedia.isEmpty()) {
-            panelPeliculasSecciones.add(crearFilaSeccion("😂 Comedia", comedia));
-            panelPeliculasSecciones.add(Box.createRigidArea(new Dimension(0, 30)));
+        for (String genero : generosDB) {
+            List<Pelicula> peliculasGenero = peliculaDAO.obtenerPeliculasConFiltro(genero, "En Cartelera", LIMITE_POR_FILA);
+            if (!peliculasGenero.isEmpty()) {
+                String emoji = emojis.getOrDefault(genero, "🎬");
+                panelPeliculasSecciones.add(crearFilaSeccion(emoji + " " + genero, peliculasGenero));
+                panelPeliculasSecciones.add(Box.createRigidArea(new Dimension(0, 30)));
+            }
         }
         
         panelPeliculasSecciones.revalidate();
@@ -529,7 +563,6 @@ public class CatalogoPeliculasFrame extends JFrame {
     }
     
     private JPanel crearFilaSeccion(String titulo, List<Pelicula> peliculas) {
-        // USANDO CINEMARXESTILOS:
         JPanel panelFila = new JPanel(new BorderLayout(0, 10));
         panelFila.setBackground(CinemarXEstilos.COLOR_FONDO);
         
@@ -564,9 +597,7 @@ public class CatalogoPeliculasFrame extends JFrame {
         return panelFila;
     }
     
-    
     private JPanel crearCardPelicula(Pelicula peli) {
-        // USANDO CINEMARXESTILOS:
         JPanel card = new JPanel(new BorderLayout());
         card.setBackground(CinemarXEstilos.COLOR_CARD);
         card.setBorder(BorderFactory.createLineBorder(CinemarXEstilos.COLOR_BORDER));
@@ -581,7 +612,7 @@ public class CatalogoPeliculasFrame extends JFrame {
         
         JLabel lblPoster = new JLabel();
         lblPoster.setPreferredSize(new Dimension(POSTER_WIDTH, POSTER_HEIGHT));
-        lblPoster.setBackground(new Color(60, 60, 60)); // Color específico está bien
+        lblPoster.setBackground(new Color(60, 60, 60));
         lblPoster.setOpaque(true);
         lblPoster.setHorizontalAlignment(SwingConstants.CENTER);
         lblPoster.setForeground(CinemarXEstilos.COLOR_TEXTO_SECUNDARIO);
@@ -632,10 +663,9 @@ public class CatalogoPeliculasFrame extends JFrame {
         
         JLabel badge = new JLabel(peli.estaEnCartelera() ? "EN CARTELERA" : "PRÓXIMAMENTE");
         badge.setFont(new Font("SansSerif", Font.BOLD, 9));
-        badge.setForeground(Color.WHITE); // Color específico está bien
+        badge.setForeground(Color.WHITE);
         badge.setOpaque(true);
-        // USANDO CINEMARXESTILOS:
-        badge.setBackground(peli.estaEnCartelera() ? CinemarXEstilos.COLOR_ROJO : new Color(234, 179, 8)); // Color específico para "Próximamente"
+        badge.setBackground(peli.estaEnCartelera() ? CinemarXEstilos.COLOR_ROJO : new Color(234, 179, 8));
         badge.setBorder(new EmptyBorder(4, 8, 4, 8));
         
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -647,7 +677,6 @@ public class CatalogoPeliculasFrame extends JFrame {
         posterWrapper.add(topPanel, BorderLayout.NORTH);
         
         JPanel info = new JPanel(new BorderLayout());
-        // USANDO CINEMARXESTILOS:
         info.setBackground(CinemarXEstilos.COLOR_CARD);
         info.setBorder(new EmptyBorder(10, 10, 10, 10));
         
@@ -670,10 +699,12 @@ public class CatalogoPeliculasFrame extends JFrame {
             @Override public void mouseExited(MouseEvent e) { card.setBorder(BorderFactory.createLineBorder(CinemarXEstilos.COLOR_BORDER)); }
             @Override
             public void mouseClicked(MouseEvent e) {
-                // Aquí es donde tu compañero pondría su código
                 JOptionPane.showMessageDialog(card, 
-                    "CLIC: Abriendo módulo de detalle para:\n" + peli.getTitulo(),
-                    "Acción Principal",
+                    "Película: " + peli.getTitulo() + "\n" +
+                    "Género: " + peli.getGenero() + "\n" +
+                    "Clasificación: " + peli.getClasificacionEdad() + "\n\n" +
+                    "(Aquí se abrirá el detalle completo)",
+                    "Detalle de Película",
                     JOptionPane.INFORMATION_MESSAGE
                 );
             }
@@ -681,7 +712,6 @@ public class CatalogoPeliculasFrame extends JFrame {
         
         return card;
     }
-    
     
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
