@@ -12,7 +12,7 @@ import java.util.Map;
 import java.text.Normalizer; 
 
 // ******************************************************************************
-// NOTA: Se asume la existencia de las clases 'ConexionBD', 'Producto', y 
+// NOTA: Se asume la existenciae las clases 'ConexionBD', 'Producto', y 
 // 'CustomizationDialog' para que este código compile y funcione correctamente.
 // ******************************************************************************
 

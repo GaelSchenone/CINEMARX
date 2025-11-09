@@ -23,7 +23,7 @@ public class M3 {
         } catch (Exception ignored) {
         }
         
-        // Probar conexión al iniciar
+        // Probar conexión al iciar
         Connection testCon = ConexionBD.getConexion();
         if (testCon != null) {
             System.out.println("✅ Aplicación iniciada correctamente");

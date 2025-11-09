@@ -108,7 +108,7 @@ public class CustomizationDialog extends JDialog {
         } else if (categoria.equals("Combos")) {
             // 🚨 Lógica de personalización de Combos 🚨
             
-            // Palabras clave para el Combo FAMILIAR (2 Pochoclos y 2 Gaseosas)
+            // Palabras clave para el Combo FAMILIAR (2 Phoclos y 2 Gaseosas)
             final String COMBO_FAMILIAR_CLAVES = "familiar|cuatro|4"; 
 
             if (nombreLower.matches(".*(" + COMBO_FAMILIAR_CLAVES + ").*")) {

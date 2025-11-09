@@ -30,7 +30,7 @@ public class ConexionBD {
         try {
             if (conexion != null && !conexion.isClosed()) {
                 conexion.close();
-                System.out.println("✓ Conexión cerrada correctamente.");
+                System.out.println("✓ Conexión cerrada correctamente");
             }
         } catch (SQLException e) {
             System.err.println("❌ Error al cerrar la conexión: " + e.getMessage());
