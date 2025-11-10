@@ -86,25 +86,92 @@ public class CatalogoPeliculasFrame extends JFrame {
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(CinemarXEstilos.COLOR_HEADER);
         header.setBorder(new EmptyBorder(15, 30, 15, 30));
-        
-        JPanel panelLogo = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+    
+        // Panel del logo (isologo + logotipo como imágenes)
+        JPanel panelLogo = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         panelLogo.setBackground(CinemarXEstilos.COLOR_HEADER);
+    
+        // 1. Isologo (ícono pequeño)
+        JLabel lblIsologo = new JLabel();
+        lblIsologo.setPreferredSize(new Dimension(40, 40));
+        lblIsologo.setHorizontalAlignment(SwingConstants.CENTER);
+    
+        SwingWorker<ImageIcon, Void> workerIsologo = new SwingWorker<ImageIcon, Void>() {
+            @Override
+            protected ImageIcon doInBackground() throws Exception {
+                try {
+                    URL url = new URL("https://gaelschenone.aguilucho.ar/source_cmx/index.php?preview=logos%2FCINEMARX%20isologo.png");
+                    Image image = ImageIO.read(url);
+                    if (image != null) {
+                        Image scaledImage = image.getScaledInstance(40, 40, Image.SCALE_SMOOTH);
+                        return new ImageIcon(scaledImage);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error al cargar isologo: " + e.getMessage());
+                }
+                return null;
+            }
         
-        JLabel lblCinemar = new JLabel("CINEMAR");
-        lblCinemar.setFont(new Font("SansSerif", Font.BOLD, 28));
-        lblCinemar.setForeground(CinemarXEstilos.COLOR_TEXTO);
+            @Override
+            protected void done() {
+                try {
+                    ImageIcon logoIcon = get();
+                    if (logoIcon != null) {
+                        lblIsologo.setIcon(logoIcon);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        workerIsologo.execute();
+    
+        // 2. Logotipo (texto como imagen)
+        JLabel lblLogotipo = new JLabel("CINEMARX"); // Texto temporal mientras carga
+        lblLogotipo.setFont(new Font("SansSerif", Font.BOLD, 24));
+        lblLogotipo.setForeground(CinemarXEstilos.COLOR_TEXTO);
+        lblLogotipo.setPreferredSize(new Dimension(180, 40));
+        lblLogotipo.setHorizontalAlignment(SwingConstants.LEFT);
+        lblLogotipo.setVerticalAlignment(SwingConstants.CENTER);
+    
+        SwingWorker<ImageIcon, Void> workerLogotipo = new SwingWorker<ImageIcon, Void>() {
+            @Override
+            protected ImageIcon doInBackground() throws Exception {
+                try {
+                    URL url = new URL("https://gaelschenone.aguilucho.ar/source_cmx/index.php?preview=logos%2FCINEMARX%20logotipo.png");
+                    Image image = ImageIO.read(url);
+                    if (image != null) {
+                        // Mantener proporción, altura de 35px
+                        Image scaledImage = image.getScaledInstance(-1, 35, Image.SCALE_SMOOTH);
+                        return new ImageIcon(scaledImage);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error al cargar logotipo: " + e.getMessage());
+                }
+                return null;
+            }
         
-        JLabel lblX = new JLabel("X");
-        lblX.setFont(new Font("SansSerif", Font.BOLD, 28));
-        lblX.setForeground(CinemarXEstilos.COLOR_ROJO);
-        lblX.setBorder(new EmptyBorder(0, 2, 0, 0));
-        
-        panelLogo.add(lblCinemar);
-        panelLogo.add(lblX);
-        
+            @Override
+            protected void done() {
+                try {
+                    ImageIcon logoIcon = get();
+                    if (logoIcon != null) {
+                        lblLogotipo.setIcon(logoIcon);
+                        lblLogotipo.setText(null); // Quitar texto temporal
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        workerLogotipo.execute();
+    
+        panelLogo.add(lblIsologo);
+        panelLogo.add(lblLogotipo);
+    
         JPanel panelMenu = new JPanel(new FlowLayout(FlowLayout.RIGHT, 20, 0));
         panelMenu.setBackground(CinemarXEstilos.COLOR_HEADER);
-        
+    
         String[] opciones = {"PELÍCULAS", "BUFFET", "MEMBRESÍA"};
         for (String opcion : opciones) {
             JLabel lblMenu = new JLabel(opcion);
@@ -117,7 +184,7 @@ public class CatalogoPeliculasFrame extends JFrame {
             });
             panelMenu.add(lblMenu);
         }
-        
+    
         JLabel iconoUsuario = new JLabel("👤");
         iconoUsuario.setFont(new Font("SansSerif", Font.PLAIN, 24));
         iconoUsuario.setOpaque(true);
@@ -125,10 +192,10 @@ public class CatalogoPeliculasFrame extends JFrame {
         iconoUsuario.setPreferredSize(new Dimension(40, 40));
         iconoUsuario.setHorizontalAlignment(SwingConstants.CENTER);
         panelMenu.add(iconoUsuario);
-        
+    
         header.add(panelLogo, BorderLayout.WEST);
         header.add(panelMenu, BorderLayout.EAST);
-        
+    
         return header;
     }
     
